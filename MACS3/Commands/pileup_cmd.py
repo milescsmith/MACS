@@ -23,9 +23,7 @@ from MACS3.Signal.Pileup import pileup_and_write_se, pileup_and_write_pe
 
 
 def run(o_options):
-    """The Main function/pipeline for duplication filter.
-
-    """
+    """The Main function/pipeline for duplication filter."""
     # Parse options...
     options = opt_validate_pileup(o_options)
     # end of parsing commandline options
@@ -35,7 +33,7 @@ def run(o_options):
     # error = options.error
 
     # 0 output arguments
-    options.PE_MODE = options.format in ('BAMPE', 'BEDPE')
+    options.PE_MODE = options.format in ("BAMPE", "BEDPE")
 
     # 0 prepare output file
     outfile = os.path.join(options.outdir, options.outputfile).encode()
@@ -48,7 +46,7 @@ def run(o_options):
     if options.PE_MODE:
         info("# read input file in Paired-end mode.")
         treat = load_frag_files_options(options)  # return PETrackI object
-        t0 = treat.total                          # total fragments
+        t0 = treat.total  # total fragments
         info("# total fragments/pairs in alignment file: %d" % (t0))
         info("# Pileup paired-end alignment file.")
         pileup_and_write_pe(treat, outfile)
@@ -62,19 +60,37 @@ def run(o_options):
         info("# total tags in alignment file: %d", t0)
 
         if options.bothdirection:
-            info("# Pileup alignment file, extend each read towards up/downstream direction with %d bps" % options.extsize)
-            pileup_and_write_se(treat, outfile, options.extsize * 2, 1, directional=False, halfextension=False)
+            info(
+                "# Pileup alignment file, extend each read towards up/downstream direction with %d bps"
+                % options.extsize
+            )
+            pileup_and_write_se(
+                treat,
+                outfile,
+                options.extsize * 2,
+                1,
+                directional=False,
+                halfextension=False,
+            )
         else:
-            info("# Pileup alignment file, extend each read towards downstream direction with %d bps" % options.extsize)
-            pileup_and_write_se(treat, outfile, options.extsize, 1, directional=True, halfextension=False)
+            info(
+                "# Pileup alignment file, extend each read towards downstream direction with %d bps"
+                % options.extsize
+            )
+            pileup_and_write_se(
+                treat,
+                outfile,
+                options.extsize,
+                1,
+                directional=True,
+                halfextension=False,
+            )
 
     info("# Done! Check %s" % options.outputfile)
 
 
 def load_tag_files_options(options):
-    """From the options, load alignment tags.
-
-    """
+    """From the options, load alignment tags."""
     options.info("# read treatment tags...")
     tp = options.parser(options.ifile[0], buffer_size=options.buffer_size)
     tsize = tp.tsize()
@@ -93,9 +109,7 @@ def load_tag_files_options(options):
 
 
 def load_frag_files_options(options):
-    """From the options, load treatment fragments and control fragments (if available).
-
-    """
+    """From the options, load treatment fragments and control fragments (if available)."""
     options.info("# read treatment fragments...")
 
     tp = options.parser(options.ifile[0], buffer_size=options.buffer_size)

@@ -24,6 +24,7 @@ import os
 import numpy as np
 import cython
 import cython.cimports.numpy as cnp
+
 # from numpy cimport int32_t, int64_t, float32_t, float64_t
 from cython.cimports.cpython import bool
 from cykhash import PyObjectMap, Float32to32Map
@@ -56,8 +57,7 @@ logLR_dict = PyObjectMap()
 
 @cython.cfunc
 def get_pscore(t: tuple) -> cython.float:
-    """t: tuple of (lambda, observation)
-    """
+    """t: tuple of (lambda, observation)"""
     val: cython.float
 
     if t in pscore_dict:
@@ -85,13 +85,14 @@ def get_logLR_asym(t: tuple) -> cython.float:
         y = t[1]
         # calculate and cache
         if x > y:
-            val = (x*(log10(x)-log10(y))+y-x)
+            val = x * (log10(x) - log10(y)) + y - x
         elif x < y:
-            val = (x*(-log10(x)+log10(y))-y+x)
+            val = x * (-log10(x) + log10(y)) - y + x
         else:
             val = 0
         logLR_dict[t] = val
         return val
+
 
 # ------------------------------------
 # constants
@@ -119,43 +120,44 @@ def clean_up_ndarray(x: cnp.ndarray):
 @cython.cfunc
 @cython.inline
 def chi2_k1_cdf(x: cython.float) -> cython.float:
-    return erf(sqrt(x/2))
+    return erf(sqrt(x / 2))
 
 
 @cython.cfunc
 @cython.inline
 def log10_chi2_k1_cdf(x: cython.float) -> cython.float:
-    return log10(erf(sqrt(x/2)))
+    return log10(erf(sqrt(x / 2)))
 
 
 @cython.cfunc
 @cython.inline
 def chi2_k2_cdf(x: cython.float) -> cython.float:
-    return 1 - exp(-x/2)
+    return 1 - exp(-x / 2)
 
 
 @cython.cfunc
 @cython.inline
 def log10_chi2_k2_cdf(x: cython.float) -> cython.float:
-    return log1p(- exp(-x/2)) * LOG10_E
+    return log1p(-exp(-x / 2)) * LOG10_E
 
 
 @cython.cfunc
 @cython.inline
 def chi2_k4_cdf(x: cython.float) -> cython.float:
-    return 1 - exp(-x/2) * (1 + x/2)
+    return 1 - exp(-x / 2) * (1 + x / 2)
 
 
 @cython.cfunc
 @cython.inline
 def log10_chi2_k4_CDF(x: cython.float) -> cython.float:
-    return log1p(- exp(-x/2) * (1 + x/2)) * LOG10_E
+    return log1p(-exp(-x / 2) * (1 + x / 2)) * LOG10_E
 
 
 @cython.cfunc
 @cython.inline
-def apply_multiple_cutoffs(multiple_score_arrays: list,
-                           multiple_cutoffs: list) -> cnp.ndarray:
+def apply_multiple_cutoffs(
+    multiple_score_arrays: list, multiple_cutoffs: list
+) -> cnp.ndarray:
     i: cython.int
     ret: cnp.ndarray
 
@@ -169,8 +171,7 @@ def apply_multiple_cutoffs(multiple_score_arrays: list,
 
 @cython.cfunc
 @cython.inline
-def get_from_multiple_scores(multiple_score_arrays: list,
-                             index: cython.int) -> list:
+def get_from_multiple_scores(multiple_score_arrays: list, index: cython.int) -> list:
     ret: list = []
     i: cython.int
 
@@ -181,26 +182,21 @@ def get_from_multiple_scores(multiple_score_arrays: list,
 
 @cython.cfunc
 @cython.inline
-def get_logFE(x: cython.float,
-              y: cython.float) -> cython.float:
-    """ return 100* log10 fold enrichment with +1 pseudocount.
-    """
-    return log10(x/y)
+def get_logFE(x: cython.float, y: cython.float) -> cython.float:
+    """return 100* log10 fold enrichment with +1 pseudocount."""
+    return log10(x / y)
 
 
 @cython.cfunc
 @cython.inline
-def get_subtraction(x: cython.float,
-                    y: cython.float) -> cython.float:
-    """ return subtraction.
-    """
+def get_subtraction(x: cython.float, y: cython.float) -> cython.float:
+    """return subtraction."""
     return x - y
 
 
 @cython.cfunc
 @cython.inline
-def getitem_then_subtract(peakset: list,
-                          start: cython.int) -> list:
+def getitem_then_subtract(peakset: list, start: cython.int) -> list:
     a: list
 
     a = [x["start"] for x in peakset]
@@ -211,44 +207,35 @@ def getitem_then_subtract(peakset: list,
 
 @cython.cfunc
 @cython.inline
-def left_sum(data, pos: cython.int,
-             width: cython.int) -> cython.int:
-    """
-    """
+def left_sum(data, pos: cython.int, width: cython.int) -> cython.int:
+    """ """
     return sum([data[x] for x in data if x <= pos and x >= pos - width])
 
 
 @cython.cfunc
 @cython.inline
-def right_sum(data,
-              pos: cython.int,
-              width: cython.int) -> cython.int:
-    """
-    """
+def right_sum(data, pos: cython.int, width: cython.int) -> cython.int:
+    """ """
     return sum([data[x] for x in data if x >= pos and x <= pos + width])
 
 
 @cython.cfunc
 @cython.inline
-def left_forward(data,
-                 pos: cython.int,
-                 window_size: cython.int) -> cython.int:
-    return data.get(pos, 0) - data.get(pos-window_size, 0)
+def left_forward(data, pos: cython.int, window_size: cython.int) -> cython.int:
+    return data.get(pos, 0) - data.get(pos - window_size, 0)
 
 
 @cython.cfunc
 @cython.inline
-def right_forward(data,
-                  pos: cython.int,
-                  window_size: cython.int) -> cython.int:
+def right_forward(data, pos: cython.int, window_size: cython.int) -> cython.int:
     return data.get(pos + window_size, 0) - data.get(pos, 0)
 
 
 @cython.cfunc
-def median_from_value_length(value: cnp.ndarray(cython.float, ndim=1),
-                             length: list) -> cython.float:
-    """
-    """
+def median_from_value_length(
+    value: cnp.ndarray(cython.float, ndim=1), length: list
+) -> cython.float:
+    """ """
     tmp: list
     c: cython.int
     tmp_l: cython.int
@@ -257,16 +244,17 @@ def median_from_value_length(value: cnp.ndarray(cython.float, ndim=1),
 
     c = 0
     tmp = sorted(list(zip(value, length)))
-    mid_l = sum(length)/2
-    for (tmp_v, tmp_l) in tmp:
+    mid_l = sum(length) / 2
+    for tmp_v, tmp_l in tmp:
         c += tmp_l
         if c > mid_l:
             return tmp_v
 
 
 @cython.cfunc
-def mean_from_value_length(value: cnp.ndarray(cython.float, ndim=1),
-                           length: list) -> cython.float:
+def mean_from_value_length(
+    value: cnp.ndarray(cython.float, ndim=1), length: list
+) -> cython.float:
     """take of: list values and of: list corresponding lengths,
     calculate the mean.  An important function for bedGraph type of
     data.
@@ -290,7 +278,7 @@ def mean_from_value_length(value: cnp.ndarray(cython.float, ndim=1),
         sum_v = tmp_sum + sum_v
         ln += tmp_l
 
-    ret = cython.cast(cython.float, (sum_v/ln))
+    ret = cython.cast(cython.float, (sum_v / ln))
 
     return ret
 
@@ -314,10 +302,10 @@ def find_optimal_cutoff(x: list, y: list) -> tuple:
     ln: cython.long
     i: cython.long
     m: cython.float
-    c: cython.float             # slop and intercept
-    sst: cython.float           # sum of squared total
-    sse: cython.float           # sum of squared error
-    rsq: cython.float           # R-squared
+    c: cython.float  # slop and intercept
+    sst: cython.float  # sum of squared total
+    sse: cython.float  # sum of squared error
+    rsq: cython.float  # R-squared
 
     ln = len(x)
     assert ln == len(y)
@@ -329,8 +317,8 @@ def find_optimal_cutoff(x: list, y: list) -> tuple:
         # at least the largest 10 points
         m, c = np.linalg.lstsq(npA[:i], npy[:i], rcond=None)[0]
         sst = sum((npy[:i] - np.mean(npy[:i])) ** 2)
-        sse = sum((npy[:i] - m*npx[:i] - c) ** 2)
-        rsq = 1 - sse/sst
+        sse = sum((npy[:i] - m * npx[:i] - c) ** 2)
+        rsq = 1 - sse / sst
         # print i, x[i], y[i], m, c, rsq
     return (1.0, 1.0)
 
@@ -346,13 +334,14 @@ class CallerFromAlignments:
     It will compute for each chromosome separately in order to save
     memory usage.
     """
-    treat: object            # FWTrack or PETrackI object for ChIP
-    ctrl: object             # FWTrack or PETrackI object for Control
 
-    d: cython.int                           # extension size for ChIP
+    treat: object  # FWTrack or PETrackI object for ChIP
+    ctrl: object  # FWTrack or PETrackI object for Control
+
+    d: cython.int  # extension size for ChIP
     # extension sizes for Control. Can be multiple values
     ctrl_d_s: list
-    treat_scaling_factor: cython.float       # scaling factor for ChIP
+    treat_scaling_factor: cython.float  # scaling factor for ChIP
     # scaling factor for Control, corresponding to each extension size.
     ctrl_scaling_factor_s: list
     # minimum local bias to fill missing values
@@ -404,23 +393,25 @@ class CallerFromAlignments:
     # each chromosome
     pileup_data_files: dict
 
-    def __init__(self,
-                 treat,
-                 ctrl,
-                 d: cython.int = 200,
-                 ctrl_d_s: list = [200, 1000, 10000],
-                 treat_scaling_factor: cython.float = 1.0,
-                 ctrl_scaling_factor_s: list = [1.0, 0.2, 0.02],
-                 stderr_on: bool = False,
-                 pseudocount: cython.float = 1,
-                 end_shift: cython.int = 0,
-                 lambda_bg: cython.float = 0,
-                 save_bedGraph: bool = False,
-                 bedGraph_filename_prefix: str = "PREFIX",
-                 bedGraph_treat_filename: str = "TREAT.bdg",
-                 bedGraph_control_filename: str = "CTRL.bdg",
-                 cutoff_analysis_filename: str = "TMP.txt",
-                 save_SPMR: bool = False):
+    def __init__(
+        self,
+        treat,
+        ctrl,
+        d: cython.int = 200,
+        ctrl_d_s: list = [200, 1000, 10000],
+        treat_scaling_factor: cython.float = 1.0,
+        ctrl_scaling_factor_s: list = [1.0, 0.2, 0.02],
+        stderr_on: bool = False,
+        pseudocount: cython.float = 1,
+        end_shift: cython.int = 0,
+        lambda_bg: cython.float = 0,
+        save_bedGraph: bool = False,
+        bedGraph_filename_prefix: str = "PREFIX",
+        bedGraph_treat_filename: str = "TREAT.bdg",
+        bedGraph_control_filename: str = "CTRL.bdg",
+        cutoff_analysis_filename: str = "TMP.txt",
+        save_SPMR: bool = False,
+    ):
         """Initialize.
 
         A calculator is unique to each comparison of treat and
@@ -464,10 +455,10 @@ class CallerFromAlignments:
         self.treat = treat
         if ctrl:
             self.ctrl = ctrl
-        else:                   # while there is no control
+        else:  # while there is no control
             self.ctrl = treat
         self.trackline = False
-        self.d = d              # note, self.d doesn't make sense in PE mode
+        self.d = d  # note, self.d doesn't make sense in PE mode
         self.ctrl_d_s = ctrl_d_s  # note, self.d doesn't make sense in PE mode
         self.treat_scaling_factor = treat_scaling_factor
         self.ctrl_scaling_factor_s = ctrl_scaling_factor_s
@@ -521,8 +512,7 @@ class CallerFromAlignments:
 
     @cython.ccall
     def enable_trackline(self):
-        """Turn on trackline with bedgraph output
-        """
+        """Turn on trackline with bedgraph output"""
         self.trackline = True
 
     @cython.cfunc
@@ -558,45 +548,65 @@ class CallerFromAlignments:
             self.pileup_data_files[chrom] = temp_filename.encode()
 
         # reor: set clean existing self.chr_pos_treat_ctrl
-        if self.chr_pos_treat_ctrl:     # not a beautiful way to clean
+        if self.chr_pos_treat_ctrl:  # not a beautiful way to clean
             clean_up_ndarray(self.chr_pos_treat_ctrl[0])
             clean_up_ndarray(self.chr_pos_treat_ctrl[1])
             clean_up_ndarray(self.chr_pos_treat_ctrl[2])
 
         if self.PE_mode:
-            treat_pv = self.treat.pileup_a_chromosome(chrom,
-                                                      [self.treat_scaling_factor,],
-                                                      baseline_value=0.0)
+            treat_pv = self.treat.pileup_a_chromosome(
+                chrom,
+                [
+                    self.treat_scaling_factor,
+                ],
+                baseline_value=0.0,
+            )
         else:
-            treat_pv = self.treat.pileup_a_chromosome(chrom,
-                                                      [self.d,],
-                                                      [self.treat_scaling_factor,],
-                                                      baseline_value=0.0,
-                                                      directional=True,
-                                                      end_shift=self.end_shift)
+            treat_pv = self.treat.pileup_a_chromosome(
+                chrom,
+                [
+                    self.d,
+                ],
+                [
+                    self.treat_scaling_factor,
+                ],
+                baseline_value=0.0,
+                directional=True,
+                end_shift=self.end_shift,
+            )
 
         if not self.no_lambda_flag:
             if self.PE_mode:
                 # note, we pileup up PE control as SE control because
                 # we assume the bias only can be captured at the
                 # surrounding regions of cutting sites from control experiments.
-                ctrl_pv = self.ctrl.pileup_a_chromosome_c(chrom,
-                                                          self.ctrl_d_s,
-                                                          self.ctrl_scaling_factor_s,
-                                                          baseline_value=self.lambda_bg)
+                ctrl_pv = self.ctrl.pileup_a_chromosome_c(
+                    chrom,
+                    self.ctrl_d_s,
+                    self.ctrl_scaling_factor_s,
+                    baseline_value=self.lambda_bg,
+                )
             else:
-                ctrl_pv = self.ctrl.pileup_a_chromosome(chrom,
-                                                        self.ctrl_d_s,
-                                                        self.ctrl_scaling_factor_s,
-                                                        baseline_value=self.lambda_bg,
-                                                        directional=False)
+                ctrl_pv = self.ctrl.pileup_a_chromosome(
+                    chrom,
+                    self.ctrl_d_s,
+                    self.ctrl_scaling_factor_s,
+                    baseline_value=self.lambda_bg,
+                    directional=False,
+                )
         else:
             # a: set global lambda
-            ctrl_pv = [treat_pv[0][-1:], np.array([self.lambda_bg,],
-                                                  dtype="f4")]
+            ctrl_pv = [
+                treat_pv[0][-1:],
+                np.array(
+                    [
+                        self.lambda_bg,
+                    ],
+                    dtype="f4",
+                ),
+            ]
 
-        self.chr_pos_treat_ctrl = self.__chrom_pair_treat_ctrl(treat_pv,
-                                                               ctrl_pv)
+        self.chr_pos_treat_ctrl = self.__chrom_pair_treat_ctrl(treat_pv, ctrl_pv)
 
         # clean treat_pv and ctrl_pv
         treat_pv = []
@@ -722,10 +732,12 @@ class CallerFromAlignments:
         return [ret_p, ret_t, ret_c]
 
     @cython.cfunc
-    def __cal_score(self,
-                    array1: cnp.ndarray(cython.float, ndim=1),
-                    array2: cnp.ndarray(cython.float, ndim=1),
-                    cal_func) -> cnp.ndarray:
+    def __cal_score(
+        self,
+        array1: cnp.ndarray(cython.float, ndim=1),
+        array2: cnp.ndarray(cython.float, ndim=1),
+        cal_func,
+    ) -> cnp.ndarray:
         i: cython.long
         s: cnp.ndarray(cython.float, ndim=1)
 
@@ -767,7 +779,7 @@ class CallerFromAlignments:
 
         debug("Start to calculate pvalue stat...")
 
-        pscore_stat = {}        # dict()
+        pscore_stat = {}  # dict()
         for i in range(len(self.chromosomes)):
             chrom = self.chromosomes[i]
             pre_p = 0
@@ -775,17 +787,16 @@ class CallerFromAlignments:
             self.pileup_treat_ctrl_a_chromosome(chrom)
             [pos_array, treat_array, ctrl_array] = self.chr_pos_treat_ctrl
 
-            pos_view = cython.cast(cython.pointer(cython.int),
-                                   pos_array.data)
-            treat_value_view = cython.cast(cython.pointer(cython.float),
-                                           treat_array.data)
-            ctrl_value_view = cython.cast(cython.pointer(cython.float),
-                                          ctrl_array.data)
+            pos_view = cython.cast(cython.pointer(cython.int), pos_array.data)
+            treat_value_view = cython.cast(
+                cython.pointer(cython.float), treat_array.data
+            )
+            ctrl_value_view = cython.cast(cython.pointer(cython.float), ctrl_array.data)
 
             for j in range(pos_array.shape[0]):
-                this_v = get_pscore((cython.cast(cython.int,
-                                                 treat_value_view[0]),
-                                     ctrl_value_view[0]))
+                this_v = get_pscore(
+                    (cython.cast(cython.int, treat_value_view[0]), ctrl_value_view[0])
+                )
                 this_l = pos_view[0] - pre_p
                 if this_v in pscore_stat:
                     pscore_stat[this_v] += this_l
@@ -797,11 +808,11 @@ class CallerFromAlignments:
                 ctrl_value_view += 1
 
         N = sum(pscore_stat.values())  # total length
-        k = 1                          # rank
+        k = 1  # rank
         f = -log10(N)
         # pre_v = -2147483647
         # pre_l = 0
-        pre_q = 2147483647      # save the previous q-value
+        pre_q = 2147483647  # save the previous q-value
 
         self.pqtable = Float32to32Map(for_int=False)
         unique_values = sorted(list(pscore_stat.keys()), reverse=True)
@@ -814,7 +825,7 @@ class CallerFromAlignments:
             if q <= 0:
                 q = 0
                 break
-            #q = max(0,min(pre_q,q))           # make q-score monotonic
+            # q = max(0,min(pre_q,q))           # make q-score monotonic
             self.pqtable[v] = q
             pre_q = q
             k += l
@@ -825,9 +836,7 @@ class CallerFromAlignments:
         return
 
     @cython.cfunc
-    def __pre_computes(self,
-                       max_gap: cython.int = 50,
-                       min_length: cython.int = 200):
+    def __pre_computes(self, max_gap: cython.int = 50, min_length: cython.int = 200):
         """After this function is called, self.pqtable and self.pvalue_length is built. All
         chromosomes will be iterated. So it will take some time.
 
@@ -875,11 +884,11 @@ class CallerFromAlignments:
         debug("Start to calculate pvalue stat...")
 
         # tmpcontains: list a of: list log pvalue cutoffs from 0.3 to 10
-        tmplist = [round(x, 5)
-                   for x in sorted(list(np.arange(0.3, 10.0, 0.3)),
-                                   reverse=True)]
+        tmplist = [
+            round(x, 5) for x in sorted(list(np.arange(0.3, 10.0, 0.3)), reverse=True)
+        ]
 
-        pscore_stat = {}      # dict()
+        pscore_stat = {}  # dict()
         # print (list(pscore_stat.keys()))
         # print (list(self.pvalue_length.keys()))
         # print (list(self.pvalue_npeaks.keys()))
@@ -892,7 +901,7 @@ class CallerFromAlignments:
 
             for n in range(len(tmplist)):
                 cutoff = tmplist[n]
-                total_l = 0           # total length in potential peak
+                total_l = 0  # total length in potential peak
                 total_p = 0
 
                 # get the regions with scores above cutoffs this is
@@ -902,18 +911,22 @@ class CallerFromAlignments:
                 # end positions of regions where score is above cutoff
                 above_cutoff_endpos = pos_array[above_cutoff]
                 # start positions of regions where score is above cutoff
-                above_cutoff_startpos = pos_array[above_cutoff-1]
+                above_cutoff_startpos = pos_array[above_cutoff - 1]
 
                 if above_cutoff_endpos.size == 0:
                     continue
 
                 # first bit of region above cutoff
-                acs_ptr = cython.cast(cython.pointer(cython.int),
-                                      above_cutoff_startpos.data)
-                ace_ptr = cython.cast(cython.pointer(cython.int),
-                                      above_cutoff_endpos.data)
+                acs_ptr = cython.cast(
+                    cython.pointer(cython.int), above_cutoff_startpos.data
+                )
+                ace_ptr = cython.cast(
+                    cython.pointer(cython.int), above_cutoff_endpos.data
+                )
 
-                peak_content = [(acs_ptr[0], ace_ptr[0]),]
+                peak_content = [
+                    (acs_ptr[0], ace_ptr[0]),
+                ]
                 lastp = ace_ptr[0]
                 acs_ptr += 1
                 ace_ptr += 1
@@ -928,7 +941,9 @@ class CallerFromAlignments:
                         if peak_length >= min_length:
                             total_l += peak_length
                             total_p += 1
-                        peak_content = [(acs_ptr[0], ace_ptr[0]),]
+                        peak_content = [
+                            (acs_ptr[0], ace_ptr[0]),
+                        ]
                     lastp = ace_ptr[0]
                     acs_ptr += 1
                     ace_ptr += 1
@@ -942,10 +957,10 @@ class CallerFromAlignments:
                 self.pvalue_length[cutoff] = self.pvalue_length.get(cutoff, 0) + total_l
                 self.pvalue_npeaks[cutoff] = self.pvalue_npeaks.get(cutoff, 0) + total_p
 
-            pos_array_ptr = cython.cast(cython.pointer(cython.int),
-                                        pos_array.data)
-            score_array_ptr = cython.cast(cython.pointer(cython.float),
-                                          score_array.data)
+            pos_array_ptr = cython.cast(cython.pointer(cython.int), pos_array.data)
+            score_array_ptr = cython.cast(
+                cython.pointer(cython.float), score_array.data
+            )
 
             pre_p = 0
             for i in range(pos_array.shape[0]):
@@ -969,9 +984,9 @@ class CallerFromAlignments:
                 pscore_stat[cutoff] = 0
 
         N = sum(pscore_stat.values())  # total length
-        k = 1                           # rank
+        k = 1  # rank
         f = -log10(N)
-        pre_q = 2147483647              # save the previous q-value
+        pre_q = 2147483647  # save the previous q-value
 
         self.pqtable = Float32to32Map(for_int=False)  # {}
         # sorted(unique_values,reverse=True)
@@ -1001,15 +1016,23 @@ class CallerFromAlignments:
         y = []
         for cutoff in tmplist:
             if self.pvalue_npeaks[cutoff] > 0:
-                fhd.write("%.2f\t%.2f\t%d\t%d\t%.2f\n" %
-                          (cutoff, self.pqtable[cutoff],
-                           self.pvalue_npeaks[cutoff],
-                           self.pvalue_length[cutoff],
-                           self.pvalue_length[cutoff]/self.pvalue_npeaks[cutoff]))
+                fhd.write(
+                    "%.2f\t%.2f\t%d\t%d\t%.2f\n"
+                    % (
+                        cutoff,
+                        self.pqtable[cutoff],
+                        self.pvalue_npeaks[cutoff],
+                        self.pvalue_length[cutoff],
+                        self.pvalue_length[cutoff] / self.pvalue_npeaks[cutoff],
+                    )
+                )
                 x.append(cutoff)
                 y.append(self.pvalue_length[cutoff])
         fhd.close()
-        info("#3 Analysis of cutoff vs num of peaks or total length has been saved in %s" % self.cutoff_analysis_filename)
+        info(
+            "#3 Analysis of cutoff vs num of peaks or total length has been saved in %s"
+            % self.cutoff_analysis_filename
+        )
         # info("#3 Suggest a cutoff...")
         # optimal_cutoff, optimal_length = find_optimal_cutoff(x, y)
         # info("#3 -10log10pvalue cutoff %.2f will call approximately %.0f bps regions as significant regions" % (optimal_cutoff, optimal_length))
@@ -1019,13 +1042,15 @@ class CallerFromAlignments:
         return
 
     @cython.ccall
-    def call_peaks(self,
-                   scoring_function_symbols: list,
-                   score_cutoff_s: list,
-                   min_length: cython.int = 200,
-                   max_gap: cython.int = 50,
-                   call_summits: bool = False,
-                   cutoff_analysis: bool = False):
+    def call_peaks(
+        self,
+        scoring_function_symbols: list,
+        score_cutoff_s: list,
+        min_length: cython.int = 200,
+        max_gap: cython.int = 50,
+        call_summits: bool = False,
+        cutoff_analysis: bool = False,
+    ):
         """Call peaks for all chromosomes. Return a PeakIO object.
 
         scoring_function_s: symbols of functions to calculate score. 'p' for pscore, 'q' for qscore, 'f' for fold change, 's' for subtraction. for example: ['p', 'q']
@@ -1049,20 +1074,29 @@ class CallerFromAlignments:
             else:
                 self.__cal_pvalue_qvalue_table()
 
-
         # prepare bedGraph file
         if self.save_bedGraph:
             self.bedGraph_treat_f = fopen(self.bedGraph_treat_filename, "w")
             self.bedGraph_ctrl_f = fopen(self.bedGraph_control_filename, "w")
 
-            info("#3 In the peak calling step, the following will be performed simultaneously:")
-            info("#3   Write bedGraph files for treatment pileup (after scaling if necessary)... %s" %
-                 self.bedGraph_filename_prefix.decode() + "_treat_pileup.bdg")
-            info("#3   Write bedGraph files for control lambda (after scaling if necessary)... %s" %
-                 self.bedGraph_filename_prefix.decode() + "_control_lambda.bdg")
+            info(
+                "#3 In the peak calling step, the following will be performed simultaneously:"
+            )
+            info(
+                "#3   Write bedGraph files for treatment pileup (after scaling if necessary)... %s"
+                % self.bedGraph_filename_prefix.decode()
+                + "_treat_pileup.bdg"
+            )
+            info(
+                "#3   Write bedGraph files for control lambda (after scaling if necessary)... %s"
+                % self.bedGraph_filename_prefix.decode()
+                + "_control_lambda.bdg"
+            )
 
             if self.save_SPMR:
-                info("#3   --SPMR is requested, so pileup will be normalized by sequencing depth in million reads.")
+                info(
+                    "#3   --SPMR is requested, so pileup will be normalized by sequencing depth in million reads."
+                )
             elif self.treat_scaling_factor == 1:
                 info("#3   Pileup will be based on sequencing depth in treatment.")
             else:
@@ -1070,22 +1104,30 @@ class CallerFromAlignments:
 
             if self.trackline:
                 # this line is REQUIRED by the wiggle format for UCSC browser
-                tmp_bytes = ("track type=bedGraph name=\"treatment pileup\" description=\"treatment pileup after possible scaling for \'%s\'\"\n" % self.bedGraph_filename_prefix).encode()
+                tmp_bytes = (
+                    'track type=bedGraph name="treatment pileup" description="treatment pileup after possible scaling for \'%s\'"\n'
+                    % self.bedGraph_filename_prefix
+                ).encode()
                 fprintf(self.bedGraph_treat_f, tmp_bytes)
-                tmp_bytes = ("track type=bedGraph name=\"control lambda\" description=\"control lambda after possible scaling for \'%s\'\"\n" % self.bedGraph_filename_prefix).encode()
+                tmp_bytes = (
+                    'track type=bedGraph name="control lambda" description="control lambda after possible scaling for \'%s\'"\n'
+                    % self.bedGraph_filename_prefix
+                ).encode()
                 fprintf(self.bedGraph_ctrl_f, tmp_bytes)
 
         info("#3 Call peaks for each chromosome...")
         for chrom in self.chromosomes:
             # treat/control bedGraph will be saved if requested by user.
-            self.__chrom_call_peak_using_certain_criteria(peaks,
-                                                          chrom,
-                                                          scoring_function_symbols,
-                                                          score_cutoff_s,
-                                                          min_length,
-                                                          max_gap,
-                                                          call_summits,
-                                                          self.save_bedGraph)
+            self.__chrom_call_peak_using_certain_criteria(
+                peaks,
+                chrom,
+                scoring_function_symbols,
+                score_cutoff_s,
+                min_length,
+                max_gap,
+                call_summits,
+                self.save_bedGraph,
+            )
 
         # close bedGraph file
         if self.save_bedGraph:
@@ -1096,16 +1138,18 @@ class CallerFromAlignments:
         return peaks
 
     @cython.cfunc
-    def __chrom_call_peak_using_certain_criteria(self,
-                                                 peaks,
-                                                 chrom: bytes,
-                                                 scoring_function_s: list,
-                                                 score_cutoff_s: list,
-                                                 min_length: cython.int,
-                                                 max_gap: cython.int,
-                                                 call_summits: bool,
-                                                 save_bedGraph: bool):
-        """ Call peaks for a chromosome.
+    def __chrom_call_peak_using_certain_criteria(
+        self,
+        peaks,
+        chrom: bytes,
+        scoring_function_s: list,
+        score_cutoff_s: list,
+        min_length: cython.int,
+        max_gap: cython.int,
+        call_summits: bool,
+        save_bedGraph: bool,
+    ):
+        """Call peaks for a chromosome.
 
         Combination of criteria is allowed here.
 
@@ -1123,7 +1167,7 @@ class CallerFromAlignments:
         treat_array: cnp.ndarray
         ctrl_array: cnp.ndarray
         score_array_s: list  # to: list keep different types of scores
-        peak_content: list           # to store information for a
+        peak_content: list  # to store information for a
         #  chunk in a peak region, it
         #  contains lists of: 1. left
         #  position; 2. right
@@ -1144,9 +1188,11 @@ class CallerFromAlignments:
         treat_array_ptr: cython.pointer(cython.float)
         ctrl_array_ptr: cython.pointer(cython.float)
 
-        assert len(scoring_function_s) == len(score_cutoff_s), "number of functions and cutoffs should be the same!"
+        assert len(scoring_function_s) == len(score_cutoff_s), (
+            "number of functions and cutoffs should be the same!"
+        )
 
-        peak_content = []           # to store points above cutoff
+        peak_content = []  # to store points above cutoff
 
         # first, build pileup, self.chr_pos_treat_ctrl
         # this step will be speeped up if pqtable is pre-computed.
@@ -1162,31 +1208,29 @@ class CallerFromAlignments:
         score_array_s = []
         for i in range(len(scoring_function_s)):
             s = scoring_function_s[i]
-            if s == 'p':
-                score_array_s.append(self.__cal_pscore(treat_array,
-                                                       ctrl_array))
-            elif s == 'q':
-                score_array_s.append(self.__cal_qscore(treat_array,
-                                                       ctrl_array))
-            elif s == 'f':
-                score_array_s.append(self.__cal_FE(treat_array,
-                                                   ctrl_array))
-            elif s == 's':
-                score_array_s.append(self.__cal_subtraction(treat_array,
-                                                            ctrl_array))
+            if s == "p":
+                score_array_s.append(self.__cal_pscore(treat_array, ctrl_array))
+            elif s == "q":
+                score_array_s.append(self.__cal_qscore(treat_array, ctrl_array))
+            elif s == "f":
+                score_array_s.append(self.__cal_FE(treat_array, ctrl_array))
+            elif s == "s":
+                score_array_s.append(self.__cal_subtraction(treat_array, ctrl_array))
 
         # get the regions with scores above cutoffs. this is not an
         # optimized method. It would be better to store score array in
         # a 2-D ndarray?
-        above_cutoff = np.nonzero(apply_multiple_cutoffs(score_array_s,
-                                                         score_cutoff_s))[0]
+        above_cutoff = np.nonzero(
+            apply_multiple_cutoffs(score_array_s, score_cutoff_s)
+        )[0]
         # indices
-        above_cutoff_index_array = np.arange(pos_array.shape[0],
-                                             dtype="i4")[above_cutoff]
+        above_cutoff_index_array = np.arange(pos_array.shape[0], dtype="i4")[
+            above_cutoff
+        ]
         # end positions of regions where score is above cutoff
         above_cutoff_endpos = pos_array[above_cutoff]
         # start positions of regions where score is above cutoff
-        above_cutoff_startpos = pos_array[above_cutoff-1]
+        above_cutoff_startpos = pos_array[above_cutoff - 1]
 
         if above_cutoff.size == 0:
             # nothing above cutoff
@@ -1203,16 +1247,13 @@ class CallerFromAlignments:
         # t0 = ttime()
 
         # first bit of region above cutoff
-        acs_ptr = cython.cast(cython.pointer(cython.int),
-                              above_cutoff_startpos.data)
-        ace_ptr = cython.cast(cython.pointer(cython.int),
-                              above_cutoff_endpos.data)
-        acia_ptr = cython.cast(cython.pointer(cython.int),
-                               above_cutoff_index_array.data)
-        treat_array_ptr = cython.cast(cython.pointer(cython.float),
-                                      treat_array.data)
-        ctrl_array_ptr = cython.cast(cython.pointer(cython.float),
-                                     ctrl_array.data)
+        acs_ptr = cython.cast(cython.pointer(cython.int), above_cutoff_startpos.data)
+        ace_ptr = cython.cast(cython.pointer(cython.int), above_cutoff_endpos.data)
+        acia_ptr = cython.cast(
+            cython.pointer(cython.int), above_cutoff_index_array.data
+        )
+        treat_array_ptr = cython.cast(cython.pointer(cython.float), treat_array.data)
+        ctrl_array_ptr = cython.cast(cython.pointer(cython.float), ctrl_array.data)
 
         ts = acs_ptr[0]
         te = ace_ptr[0]
@@ -1239,64 +1280,76 @@ class CallerFromAlignments:
             if tl <= max_gap:
                 # append.
                 peak_content.append((ts, te, tp, cp, ti))
-                lastp = te      # above_cutoff_endpos[i]
+                lastp = te  # above_cutoff_endpos[i]
             else:
                 # close
                 if call_summits:
                     # smooth length is min_length, i.e. fragment size 'd'
-                    self.__close_peak_with_subpeaks(peak_content,
-                                                    peaks,
-                                                    min_length,
-                                                    chrom,
-                                                    min_length,
-                                                    score_array_s,
-                                                    score_cutoff_s=score_cutoff_s)
+                    self.__close_peak_with_subpeaks(
+                        peak_content,
+                        peaks,
+                        min_length,
+                        chrom,
+                        min_length,
+                        score_array_s,
+                        score_cutoff_s=score_cutoff_s,
+                    )
                 else:
                     # smooth length is min_length, i.e. fragment size 'd'
-                    self.__close_peak_wo_subpeaks(peak_content,
-                                                  peaks,
-                                                  min_length,
-                                                  chrom,
-                                                  min_length,
-                                                  score_array_s,
-                                                  score_cutoff_s=score_cutoff_s)
-                peak_content = [(ts, te, tp, cp, ti),]
-                lastp = te      # above_cutoff_endpos[i]
+                    self.__close_peak_wo_subpeaks(
+                        peak_content,
+                        peaks,
+                        min_length,
+                        chrom,
+                        min_length,
+                        score_array_s,
+                        score_cutoff_s=score_cutoff_s,
+                    )
+                peak_content = [
+                    (ts, te, tp, cp, ti),
+                ]
+                lastp = te  # above_cutoff_endpos[i]
         # save the last peak
         if not peak_content:
             return
         else:
             if call_summits:
                 # smooth length is min_length, i.e. fragment size 'd'
-                self.__close_peak_with_subpeaks(peak_content,
-                                                peaks,
-                                                min_length,
-                                                chrom,
-                                                min_length,
-                                                score_array_s,
-                                                score_cutoff_s=score_cutoff_s)
+                self.__close_peak_with_subpeaks(
+                    peak_content,
+                    peaks,
+                    min_length,
+                    chrom,
+                    min_length,
+                    score_array_s,
+                    score_cutoff_s=score_cutoff_s,
+                )
             else:
                 # smooth length is min_length, i.e. fragment size 'd'
-                self.__close_peak_wo_subpeaks(peak_content,
-                                              peaks,
-                                              min_length,
-                                              chrom,
-                                              min_length,
-                                              score_array_s,
-                                              score_cutoff_s=score_cutoff_s)
+                self.__close_peak_wo_subpeaks(
+                    peak_content,
+                    peaks,
+                    min_length,
+                    chrom,
+                    min_length,
+                    score_array_s,
+                    score_cutoff_s=score_cutoff_s,
+                )
 
         # print "close peaks -- chrom:",chrom,"  time:", ttime() - t0
         return
 
     @cython.cfunc
-    def __close_peak_wo_subpeaks(self,
-                                 peak_content: list,
-                                 peaks,
-                                 min_length: cython.int,
-                                 chrom: bytes,
-                                 smoothlen: cython.int,
-                                 score_array_s: list,
-                                 score_cutoff_s: list = []) -> bool:
+    def __close_peak_wo_subpeaks(
+        self,
+        peak_content: list,
+        peaks,
+        min_length: cython.int,
+        chrom: bytes,
+        smoothlen: cython.int,
+        score_array_s: list,
+        score_cutoff_s: list = [],
+    ) -> bool:
         """Close the peak region, output peak boundaries, peak summit
         and scores, then add the peak to peakIO object.
 
@@ -1329,8 +1382,12 @@ class CallerFromAlignments:
                 (tstart, tend, ttreat_p, tctrl_p, tlist_scores_p) = peak_content[i]
                 tscore = ttreat_p  # use pscore as general score to find summit
                 if not summit_value or summit_value < tscore:
-                    tsummit = [(tend + tstart) // 2,]
-                    tsummit_index = [i,]
+                    tsummit = [
+                        (tend + tstart) // 2,
+                    ]
+                    tsummit_index = [
+                        i,
+                    ]
                     summit_value = tscore
                 elif summit_value == tscore:
                     # remember continuous summit values
@@ -1349,34 +1406,38 @@ class CallerFromAlignments:
                 if score_cutoff_s[i] > score_array_s[i][peak_content[summit_index][4]]:
                     return False  # not passed, then disgard this peak.
 
-            summit_p_score = pscore_dict[(cython.cast(cython.int,
-                                                      summit_treat),
-                                          summit_ctrl)]
+            summit_p_score = pscore_dict[
+                (cython.cast(cython.int, summit_treat), summit_ctrl)
+            ]
             summit_q_score = self.pqtable[summit_p_score]
 
-            peaks.add(chrom,           # chromosome
-                      peak_content[0][0],           # start
-                      peak_content[-1][1],          # end
-                      summit=summit_pos,     # summit position
-                      peak_score=summit_q_score,  # score at summit
-                      pileup=summit_treat,    # pileup
-                      pscore=summit_p_score,  # pvalue
-                      fold_change=(summit_treat + self.pseudocount) / (summit_ctrl + self.pseudocount),  # fold change
-                      qscore=summit_q_score  # qvalue
-                      )
+            peaks.add(
+                chrom,  # chromosome
+                peak_content[0][0],  # start
+                peak_content[-1][1],  # end
+                summit=summit_pos,  # summit position
+                peak_score=summit_q_score,  # score at summit
+                pileup=summit_treat,  # pileup
+                pscore=summit_p_score,  # pvalue
+                fold_change=(summit_treat + self.pseudocount)
+                / (summit_ctrl + self.pseudocount),  # fold change
+                qscore=summit_q_score,  # qvalue
+            )
             # start a new peak
             return True
 
     @cython.cfunc
-    def __close_peak_with_subpeaks(self,
-                                   peak_content: list,
-                                   peaks,
-                                   min_length: cython.int,
-                                   chrom: bytes,
-                                   smoothlen: cython.int,
-                                   score_array_s: list,
-                                   score_cutoff_s: list = [],
-                                   min_valley: cython.float = 0.9) -> bool:
+    def __close_peak_with_subpeaks(
+        self,
+        peak_content: list,
+        peaks,
+        min_length: cython.int,
+        chrom: bytes,
+        smoothlen: cython.int,
+        score_array_s: list,
+        score_cutoff_s: list = [],
+        min_valley: cython.float = 0.9,
+    ) -> bool:
         """Algorithm implemented by Ben, to profile the pileup signals
         within a peak region then find subpeak summits. This method is
         highly recommended for TFBS or DNAase I sites.
@@ -1421,9 +1482,9 @@ class CallerFromAlignments:
             start_boundary = 10
 
         # save the scores (qscore) for each position in this region
-        peakdata = np.zeros(end - start, dtype='f4')
+        peakdata = np.zeros(end - start, dtype="f4")
         # save the indices for each position in this region
-        peakindices = np.zeros(end - start, dtype='i4')
+        peakindices = np.zeros(end - start, dtype="i4")
         for i in range(len(peak_content)):
             (tstart, tend, ttreat_p, tctrl_p, tlist_scores_p) = peak_content[i]
             tscore = ttreat_p  # use pileup as general score to find summit
@@ -1437,20 +1498,19 @@ class CallerFromAlignments:
 
         if summit_offsets.shape[0] == 0:
             # **failsafe** if no summits, fall back on old approach #
-            return self.__close_peak_wo_subpeaks(peak_content,
-                                                 peaks,
-                                                 min_length,
-                                                 chrom,
-                                                 smoothlen,
-                                                 score_array_s,
-                                                 score_cutoff_s)
+            return self.__close_peak_wo_subpeaks(
+                peak_content,
+                peaks,
+                min_length,
+                chrom,
+                smoothlen,
+                score_array_s,
+                score_cutoff_s,
+            )
         else:
             # remove maxima that occurred in padding
-            m = np.searchsorted(summit_offsets,
-                                start_boundary)
-            n = np.searchsorted(summit_offsets,
-                                peak_length + start_boundary,
-                                'right')
+            m = np.searchsorted(summit_offsets, start_boundary)
+            n = np.searchsorted(summit_offsets, peak_length + start_boundary, "right")
             summit_offsets = summit_offsets[m:n]
 
         summit_offsets = enforce_peakyness(peakdata, summit_offsets)
@@ -1458,52 +1518,51 @@ class CallerFromAlignments:
         # print "enforced:",summit_offsets
         if summit_offsets.shape[0] == 0:
             # **failsafe** if no summits, fall back on old approach #
-            return self.__close_peak_wo_subpeaks(peak_content,
-                                                 peaks,
-                                                 min_length,
-                                                 chrom,
-                                                 smoothlen,
-                                                 score_array_s,
-                                                 score_cutoff_s)
+            return self.__close_peak_wo_subpeaks(
+                peak_content,
+                peaks,
+                min_length,
+                chrom,
+                smoothlen,
+                score_array_s,
+                score_cutoff_s,
+            )
 
         # indices are those point to peak_content
         summit_indices = peakindices[summit_offsets]
 
         summit_offsets -= start_boundary
 
-        for summit_offset, summit_index in list(zip(summit_offsets,
-                                                    summit_indices)):
-
+        for summit_offset, summit_index in list(zip(summit_offsets, summit_indices)):
             summit_treat = peak_content[summit_index][2]
             summit_ctrl = peak_content[summit_index][3]
 
-            summit_p_score = pscore_dict[(cython.cast(cython.int,
-                                                      summit_treat),
-                                          summit_ctrl)]
+            summit_p_score = pscore_dict[
+                (cython.cast(cython.int, summit_treat), summit_ctrl)
+            ]
             summit_q_score = self.pqtable[summit_p_score]
 
             for i in range(len(score_cutoff_s)):
                 if score_cutoff_s[i] > score_array_s[i][peak_content[summit_index][4]]:
                     return False  # not passed, then disgard this summit.
 
-            peaks.add(chrom,
-                      peak_content[0][0],
-                      peak_content[-1][1],
-                      summit=start + summit_offset,
-                      peak_score=summit_q_score,
-                      pileup=summit_treat,
-                      pscore=summit_p_score,
-                      fold_change=(summit_treat + self.pseudocount) / (summit_ctrl + self.pseudocount),  # fold change
-                      qscore=summit_q_score
-                      )
+            peaks.add(
+                chrom,
+                peak_content[0][0],
+                peak_content[-1][1],
+                summit=start + summit_offset,
+                peak_score=summit_q_score,
+                pileup=summit_treat,
+                pscore=summit_p_score,
+                fold_change=(summit_treat + self.pseudocount)
+                / (summit_ctrl + self.pseudocount),  # fold change
+                qscore=summit_q_score,
+            )
         # start a new peak
         return True
 
     @cython.cfunc
-    def __cal_pscore(self,
-                     array1: cnp.ndarray,
-                     array2: cnp.ndarray) -> cnp.ndarray:
-
+    def __cal_pscore(self, array1: cnp.ndarray, array2: cnp.ndarray) -> cnp.ndarray:
         i: cython.long
         array1_size: cython.long
         s: cnp.ndarray
@@ -1521,18 +1580,14 @@ class CallerFromAlignments:
         array1_size = array1.shape[0]
 
         for i in range(array1_size):
-            s_ptr[0] = get_pscore((cython.cast(cython.int,
-                                               a1_ptr[0]),
-                                   a2_ptr[0]))
+            s_ptr[0] = get_pscore((cython.cast(cython.int, a1_ptr[0]), a2_ptr[0]))
             s_ptr += 1
             a1_ptr += 1
             a2_ptr += 1
         return s
 
     @cython.cfunc
-    def __cal_qscore(self,
-                     array1: cnp.ndarray,
-                     array2: cnp.ndarray) -> cnp.ndarray:
+    def __cal_qscore(self, array1: cnp.ndarray, array2: cnp.ndarray) -> cnp.ndarray:
         i: cython.long
         s: cnp.ndarray
         a1_ptr: cython.pointer(cython.float)
@@ -1547,18 +1602,16 @@ class CallerFromAlignments:
         s_ptr = cython.cast(cython.pointer(cython.float), s.data)
 
         for i in range(array1.shape[0]):
-            s_ptr[0] = self.pqtable[get_pscore((cython.cast(cython.int,
-                                                            a1_ptr[0]),
-                                                a2_ptr[0]))]
+            s_ptr[0] = self.pqtable[
+                get_pscore((cython.cast(cython.int, a1_ptr[0]), a2_ptr[0]))
+            ]
             s_ptr += 1
             a1_ptr += 1
             a2_ptr += 1
         return s
 
     @cython.cfunc
-    def __cal_logLR(self,
-                    array1: cnp.ndarray,
-                    array2: cnp.ndarray) -> cnp.ndarray:
+    def __cal_logLR(self, array1: cnp.ndarray, array2: cnp.ndarray) -> cnp.ndarray:
         i: cython.long
         s: cnp.ndarray
         a1_ptr: cython.pointer(cython.float)
@@ -1573,17 +1626,16 @@ class CallerFromAlignments:
         s_ptr = cython.cast(cython.pointer(cython.float), s.data)
 
         for i in range(array1.shape[0]):
-            s_ptr[0] = get_logLR_asym((a1_ptr[0] + self.pseudocount,
-                                       a2_ptr[0] + self.pseudocount))
+            s_ptr[0] = get_logLR_asym(
+                (a1_ptr[0] + self.pseudocount, a2_ptr[0] + self.pseudocount)
+            )
             s_ptr += 1
             a1_ptr += 1
             a2_ptr += 1
         return s
 
     @cython.cfunc
-    def __cal_logFE(self,
-                    array1: cnp.ndarray,
-                    array2: cnp.ndarray) -> cnp.ndarray:
+    def __cal_logFE(self, array1: cnp.ndarray, array2: cnp.ndarray) -> cnp.ndarray:
         i: cython.long
         s: cnp.ndarray
         a1_ptr: cython.pointer(cython.float)
@@ -1598,17 +1650,16 @@ class CallerFromAlignments:
         s_ptr = cython.cast(cython.pointer(cython.float), s.data)
 
         for i in range(array1.shape[0]):
-            s_ptr[0] = get_logFE(a1_ptr[0] + self.pseudocount,
-                                 a2_ptr[0] + self.pseudocount)
+            s_ptr[0] = get_logFE(
+                a1_ptr[0] + self.pseudocount, a2_ptr[0] + self.pseudocount
+            )
             s_ptr += 1
             a1_ptr += 1
             a2_ptr += 1
         return s
 
     @cython.cfunc
-    def __cal_FE(self,
-                 array1: cnp.ndarray,
-                 array2: cnp.ndarray) -> cnp.ndarray:
+    def __cal_FE(self, array1: cnp.ndarray, array2: cnp.ndarray) -> cnp.ndarray:
         i: cython.long
         s: cnp.ndarray
         a1_ptr: cython.pointer(cython.float)
@@ -1630,9 +1681,9 @@ class CallerFromAlignments:
         return s
 
     @cython.cfunc
-    def __cal_subtraction(self,
-                          array1: cnp.ndarray,
-                          array2: cnp.ndarray) -> cnp.ndarray:
+    def __cal_subtraction(
+        self, array1: cnp.ndarray, array2: cnp.ndarray
+    ) -> cnp.ndarray:
         i: cython.long
         s: cnp.ndarray
         a1_ptr: cython.pointer(cython.float)
@@ -1685,26 +1736,23 @@ class CallerFromAlignments:
         fc: cython.pointer(FILE)
 
         [pos_array, treat_array, ctrl_array] = self.chr_pos_treat_ctrl
-        pos_array_ptr = cython.cast(cython.pointer(cython.int),
-                                    pos_array.data)
-        treat_array_ptr = cython.cast(cython.pointer(cython.float),
-                                      treat_array.data)
-        ctrl_array_ptr = cython.cast(cython.pointer(cython.float),
-                                     ctrl_array.data)
+        pos_array_ptr = cython.cast(cython.pointer(cython.int), pos_array.data)
+        treat_array_ptr = cython.cast(cython.pointer(cython.float), treat_array.data)
+        ctrl_array_ptr = cython.cast(cython.pointer(cython.float), ctrl_array.data)
 
         if self.save_SPMR:
             if self.treat_scaling_factor == 1:
                 # in this case, control has been asked to be scaled to depth of treatment
-                denominator = self.treat.total/1e6
+                denominator = self.treat.total / 1e6
             else:
                 # in this case, treatment has been asked to be scaled to depth of control
-                denominator = self.ctrl.total/1e6
+                denominator = self.ctrl.total / 1e6
         else:
             denominator = 1.0
 
         l = pos_array.shape[0]
 
-        if l == 0:              # if there is no data, return
+        if l == 0:  # if there is no data, return
             return False
 
         ft = self.bedGraph_treat_f
@@ -1714,14 +1762,14 @@ class CallerFromAlignments:
 
         pre_p_t = 0
         pre_p_c = 0
-        pre_v_t = treat_array_ptr[0]/denominator
-        pre_v_c = ctrl_array_ptr[0]/denominator
+        pre_v_t = treat_array_ptr[0] / denominator
+        pre_v_c = ctrl_array_ptr[0] / denominator
         treat_array_ptr += 1
         ctrl_array_ptr += 1
 
         for i in range(1, l):
-            v_t = treat_array_ptr[0]/denominator
-            v_c = ctrl_array_ptr[0]/denominator
+            v_t = treat_array_ptr[0] / denominator
+            v_c = ctrl_array_ptr[0] / denominator
             p = pos_array_ptr[0]
             pos_array_ptr += 1
             treat_array_ptr += 1
@@ -1745,14 +1793,16 @@ class CallerFromAlignments:
         return True
 
     @cython.ccall
-    def call_broadpeaks(self,
-                        scoring_function_symbols: list,
-                        lvl1_cutoff_s: list,
-                        lvl2_cutoff_s: list,
-                        min_length: cython.int = 200,
-                        lvl1_max_gap: cython.int = 50,
-                        lvl2_max_gap: cython.int = 400,
-                        cutoff_analysis: bool = False):
+    def call_broadpeaks(
+        self,
+        scoring_function_symbols: list,
+        lvl1_cutoff_s: list,
+        lvl2_cutoff_s: list,
+        min_length: cython.int = 200,
+        lvl1_max_gap: cython.int = 50,
+        lvl2_max_gap: cython.int = 400,
+        cutoff_analysis: bool = False,
+    ):
         """This function try to find enriched regions within which,
         scores are continuously higher than a given cutoff for level
         1, and link them using the gap above level 2 cutoff with a
@@ -1806,32 +1856,49 @@ class CallerFromAlignments:
 
         # prepare bedGraph file
         if self.save_bedGraph:
-
             self.bedGraph_treat_f = fopen(self.bedGraph_treat_filename, "w")
             self.bedGraph_ctrl_f = fopen(self.bedGraph_control_filename, "w")
-            info("#3 In the peak calling step, the following will be performed simultaneously:")
-            info("#3   Write bedGraph files for treatment pileup (after scaling if necessary)... %s" % self.bedGraph_filename_prefix.decode() + "_treat_pileup.bdg")
-            info("#3   Write bedGraph files for control lambda (after scaling if necessary)... %s" % self.bedGraph_filename_prefix.decode() + "_control_lambda.bdg")
+            info(
+                "#3 In the peak calling step, the following will be performed simultaneously:"
+            )
+            info(
+                "#3   Write bedGraph files for treatment pileup (after scaling if necessary)... %s"
+                % self.bedGraph_filename_prefix.decode()
+                + "_treat_pileup.bdg"
+            )
+            info(
+                "#3   Write bedGraph files for control lambda (after scaling if necessary)... %s"
+                % self.bedGraph_filename_prefix.decode()
+                + "_control_lambda.bdg"
+            )
 
             if self.trackline:
                 # this line is REQUIRED by the wiggle format for UCSC browser
-                tmp_bytes = ("track type=bedGraph name=\"treatment pileup\" description=\"treatment pileup after possible scaling for \'%s\'\"\n" % self.bedGraph_filename_prefix).encode()
+                tmp_bytes = (
+                    'track type=bedGraph name="treatment pileup" description="treatment pileup after possible scaling for \'%s\'"\n'
+                    % self.bedGraph_filename_prefix
+                ).encode()
                 fprintf(self.bedGraph_treat_f, tmp_bytes)
-                tmp_bytes = ("track type=bedGraph name=\"control lambda\" description=\"control lambda after possible scaling for \'%s\'\"\n" % self.bedGraph_filename_prefix).encode()
+                tmp_bytes = (
+                    'track type=bedGraph name="control lambda" description="control lambda after possible scaling for \'%s\'"\n'
+                    % self.bedGraph_filename_prefix
+                ).encode()
                 fprintf(self.bedGraph_ctrl_f, tmp_bytes)
 
         info("#3 Call peaks for each chromosome...")
         for chrom in self.chromosomes:
-            self.__chrom_call_broadpeak_using_certain_criteria(lvl1peaks,
-                                                               lvl2peaks,
-                                                               chrom,
-                                                               scoring_function_symbols,
-                                                               lvl1_cutoff_s,
-                                                               lvl2_cutoff_s,
-                                                               min_length,
-                                                               lvl1_max_gap,
-                                                               lvl2_max_gap,
-                                                               self.save_bedGraph)
+            self.__chrom_call_broadpeak_using_certain_criteria(
+                lvl1peaks,
+                lvl2peaks,
+                chrom,
+                scoring_function_symbols,
+                lvl1_cutoff_s,
+                lvl2_cutoff_s,
+                min_length,
+                lvl1_max_gap,
+                lvl2_max_gap,
+                self.save_bedGraph,
+            )
 
         # close bedGraph file
         if self.save_bedGraph:
@@ -1848,7 +1915,7 @@ class CallerFromAlignments:
             lvl1peakschrom = lvl1peaks.get_data_from_chrom(chrom)
             lvl2peakschrom = lvl2peaks.get_data_from_chrom(chrom)
             lvl1peakschrom_next = iter(lvl1peakschrom).__next__
-            tmppeakset = []             # to temporarily store lvl1 region inside a lvl2 region
+            tmppeakset = []  # to temporarily store lvl1 region inside a lvl2 region
             # our assumption is lvl1 regions should be included in lvl2 regions
             try:
                 lvl1 = lvl1peakschrom_next()
@@ -1858,46 +1925,44 @@ class CallerFromAlignments:
                     lvl2 = lvl2peakschrom[i]
 
                     while True:
-                        if lvl2["start"] <= lvl1["start"] and lvl1["end"] <= lvl2["end"]:
+                        if (
+                            lvl2["start"] <= lvl1["start"]
+                            and lvl1["end"] <= lvl2["end"]
+                        ):
                             tmppeakset.append(lvl1)
                             lvl1 = lvl1peakschrom_next()
                         else:
                             # make a hierarchical broad peak
                             # print lvl2["start"], lvl2["end"], lvl2["score"]
-                            self.__add_broadpeak(broadpeaks,
-                                                 chrom,
-                                                 lvl2,
-                                                 tmppeakset)
+                            self.__add_broadpeak(broadpeaks, chrom, lvl2, tmppeakset)
                             tmppeakset = []
                             break
             except StopIteration:
                 # no more strong (aka lvl1) peaks left
-                self.__add_broadpeak(broadpeaks,
-                                     chrom,
-                                     lvl2,
-                                     tmppeakset)
+                self.__add_broadpeak(broadpeaks, chrom, lvl2, tmppeakset)
                 tmppeakset = []
                 # add the rest lvl2 peaks
-                for j in range(i+1, len(lvl2peakschrom)):
-                    self.__add_broadpeak(broadpeaks,
-                                         chrom,
-                                         lvl2peakschrom[j],
-                                         tmppeakset)
+                for j in range(i + 1, len(lvl2peakschrom)):
+                    self.__add_broadpeak(
+                        broadpeaks, chrom, lvl2peakschrom[j], tmppeakset
+                    )
 
         return broadpeaks
 
     @cython.cfunc
-    def __chrom_call_broadpeak_using_certain_criteria(self,
-                                                      lvl1peaks,
-                                                      lvl2peaks,
-                                                      chrom: bytes,
-                                                      scoring_function_s: list,
-                                                      lvl1_cutoff_s: list,
-                                                      lvl2_cutoff_s: list,
-                                                      min_length: cython.int,
-                                                      lvl1_max_gap: cython.int,
-                                                      lvl2_max_gap: cython.int,
-                                                      save_bedGraph: bool):
+    def __chrom_call_broadpeak_using_certain_criteria(
+        self,
+        lvl1peaks,
+        lvl2peaks,
+        chrom: bytes,
+        scoring_function_s: list,
+        lvl1_cutoff_s: list,
+        lvl2_cutoff_s: list,
+        min_length: cython.int,
+        lvl1_max_gap: cython.int,
+        lvl2_max_gap: cython.int,
+        save_bedGraph: bool,
+    ):
         """Call peaks for a chromosome.
 
         Combination of criteria is allowed here.
@@ -1921,7 +1986,7 @@ class CallerFromAlignments:
         treat_array: cnp.ndarray
         ctrl_array: cnp.ndarray
         above_cutoff_index_array: cnp.ndarray
-        score_array_s: list          # to: list keep different types of scores
+        score_array_s: list  # to: list keep different types of scores
         peak_content: list
         acs_ptr: cython.pointer(cython.int)
         ace_ptr: cython.pointer(cython.int)
@@ -1929,8 +1994,12 @@ class CallerFromAlignments:
         treat_array_ptr: cython.pointer(cython.float)
         ctrl_array_ptr: cython.pointer(cython.float)
 
-        assert len(scoring_function_s) == len(lvl1_cutoff_s), "number of functions and cutoffs should be the same!"
-        assert len(scoring_function_s) == len(lvl2_cutoff_s), "number of functions and cutoffs should be the same!"
+        assert len(scoring_function_s) == len(lvl1_cutoff_s), (
+            "number of functions and cutoffs should be the same!"
+        )
+        assert len(scoring_function_s) == len(lvl2_cutoff_s), (
+            "number of functions and cutoffs should be the same!"
+        )
 
         # first, build pileup, self.chr_pos_treat_ctrl
         self.pileup_treat_ctrl_a_chromosome(chrom)
@@ -1944,29 +2013,33 @@ class CallerFromAlignments:
         score_array_s = []
         for i in range(len(scoring_function_s)):
             s = scoring_function_s[i]
-            if s == 'p':
-                score_array_s.append(self.__cal_pscore(treat_array,
-                                                       ctrl_array))
-            elif s == 'q':
-                score_array_s.append(self.__cal_qscore(treat_array,
-                                                       ctrl_array))
-            elif s == 'f':
-                score_array_s.append(self.__cal_FE(treat_array,
-                                                   ctrl_array))
-            elif s == 's':
-                score_array_s.append(self.__cal_subtraction(treat_array,
-                                                            ctrl_array))
+            if s == "p":
+                score_array_s.append(self.__cal_pscore(treat_array, ctrl_array))
+            elif s == "q":
+                score_array_s.append(self.__cal_qscore(treat_array, ctrl_array))
+            elif s == "f":
+                score_array_s.append(self.__cal_FE(treat_array, ctrl_array))
+            elif s == "s":
+                score_array_s.append(self.__cal_subtraction(treat_array, ctrl_array))
 
         # lvl1 : strong peaks
-        peak_content = []           # to store points above cutoff
+        peak_content = []  # to store points above cutoff
 
         # get the regions with scores above cutoffs
-        above_cutoff = np.nonzero(apply_multiple_cutoffs(score_array_s,
-                                                         lvl1_cutoff_s))[0]  # this is not an optimized method. It would be better to store score array in a 2-D ndarray?
-        above_cutoff_index_array = np.arange(pos_array.shape[0],
-                                             dtype="int32")[above_cutoff]  # indices
-        above_cutoff_endpos = pos_array[above_cutoff]  # end positions of regions where score is above cutoff
-        above_cutoff_startpos = pos_array[above_cutoff-1]  # start positions of regions where score is above cutoff
+        above_cutoff = np.nonzero(
+            apply_multiple_cutoffs(score_array_s, lvl1_cutoff_s)
+        )[
+            0
+        ]  # this is not an optimized method. It would be better to store score array in a 2-D ndarray?
+        above_cutoff_index_array = np.arange(pos_array.shape[0], dtype="int32")[
+            above_cutoff
+        ]  # indices
+        above_cutoff_endpos = pos_array[
+            above_cutoff
+        ]  # end positions of regions where score is above cutoff
+        above_cutoff_startpos = pos_array[
+            above_cutoff - 1
+        ]  # start positions of regions where score is above cutoff
 
         if above_cutoff.size == 0:
             # nothing above cutoff
@@ -1977,16 +2050,13 @@ class CallerFromAlignments:
             above_cutoff_startpos[0] = 0
 
         # first bit of region above cutoff
-        acs_ptr = cython.cast(cython.pointer(cython.int),
-                              above_cutoff_startpos.data)
-        ace_ptr = cython.cast(cython.pointer(cython.int),
-                              above_cutoff_endpos.data)
-        acia_ptr = cython.cast(cython.pointer(cython.int),
-                               above_cutoff_index_array.data)
-        treat_array_ptr = cython.cast(cython.pointer(cython.float),
-                                      treat_array.data)
-        ctrl_array_ptr = cython.cast(cython.pointer(cython.float),
-                                     ctrl_array.data)
+        acs_ptr = cython.cast(cython.pointer(cython.int), above_cutoff_startpos.data)
+        ace_ptr = cython.cast(cython.pointer(cython.int), above_cutoff_endpos.data)
+        acia_ptr = cython.cast(
+            cython.pointer(cython.int), above_cutoff_index_array.data
+        )
+        treat_array_ptr = cython.cast(cython.pointer(cython.float), treat_array.data)
+        ctrl_array_ptr = cython.cast(cython.pointer(cython.float), ctrl_array.data)
 
         ts = acs_ptr[0]
         te = ace_ptr[0]
@@ -1995,7 +2065,7 @@ class CallerFromAlignments:
         cp = ctrl_array_ptr[ti]
 
         peak_content.append((ts, te, tp, cp, ti))
-        acs_ptr += 1            # move ptr
+        acs_ptr += 1  # move ptr
         ace_ptr += 1
         acia_ptr += 1
         lastp = te
@@ -2017,37 +2087,49 @@ class CallerFromAlignments:
                 lastp = te
             else:
                 # close
-                self.__close_peak_for_broad_region(peak_content,
-                                                   lvl1peaks,
-                                                   min_length,
-                                                   chrom,
-                                                   lvl1_max_gap//2,
-                                                   score_array_s)
-                peak_content = [(ts, te, tp, cp, ti),]
-                lastp = te      # above_cutoff_endpos[i]
+                self.__close_peak_for_broad_region(
+                    peak_content,
+                    lvl1peaks,
+                    min_length,
+                    chrom,
+                    lvl1_max_gap // 2,
+                    score_array_s,
+                )
+                peak_content = [
+                    (ts, te, tp, cp, ti),
+                ]
+                lastp = te  # above_cutoff_endpos[i]
 
         # save the last peak
         if peak_content:
-            self.__close_peak_for_broad_region(peak_content,
-                                               lvl1peaks,
-                                               min_length,
-                                               chrom,
-                                               lvl1_max_gap//2,
-                                               score_array_s)
+            self.__close_peak_for_broad_region(
+                peak_content,
+                lvl1peaks,
+                min_length,
+                chrom,
+                lvl1_max_gap // 2,
+                score_array_s,
+            )
 
         # lvl2 : weak peaks
-        peak_content = []           # to store points above cutoff
+        peak_content = []  # to store points above cutoff
 
         # get the regions with scores above cutoffs
 
         # this is not an optimized method. It would be better to store score array in a 2-D ndarray?
-        above_cutoff = np.nonzero(apply_multiple_cutoffs(score_array_s,
-                                                         lvl2_cutoff_s))[0]
+        above_cutoff = np.nonzero(apply_multiple_cutoffs(score_array_s, lvl2_cutoff_s))[
+            0
+        ]
 
-        above_cutoff_index_array = np.arange(pos_array.shape[0],
-                                             dtype="i4")[above_cutoff] # indices
-        above_cutoff_endpos = pos_array[above_cutoff]  # end positions of regions where score is above cutoff
-        above_cutoff_startpos = pos_array[above_cutoff-1]  # start positions of regions where score is above cutoff
+        above_cutoff_index_array = np.arange(pos_array.shape[0], dtype="i4")[
+            above_cutoff
+        ]  # indices
+        above_cutoff_endpos = pos_array[
+            above_cutoff
+        ]  # end positions of regions where score is above cutoff
+        above_cutoff_startpos = pos_array[
+            above_cutoff - 1
+        ]  # start positions of regions where score is above cutoff
 
         if above_cutoff.size == 0:
             # nothing above cutoff
@@ -2058,16 +2140,13 @@ class CallerFromAlignments:
             above_cutoff_startpos[0] = 0
 
         # first bit of region above cutoff
-        acs_ptr = cython.cast(cython.pointer(cython.int),
-                              above_cutoff_startpos.data)
-        ace_ptr = cython.cast(cython.pointer(cython.int),
-                              above_cutoff_endpos.data)
-        acia_ptr = cython.cast(cython.pointer(cython.int),
-                               above_cutoff_index_array.data)
-        treat_array_ptr = cython.cast(cython.pointer(cython.float),
-                                      treat_array.data)
-        ctrl_array_ptr = cython.cast(cython.pointer(cython.float),
-                                     ctrl_array.data)
+        acs_ptr = cython.cast(cython.pointer(cython.int), above_cutoff_startpos.data)
+        ace_ptr = cython.cast(cython.pointer(cython.int), above_cutoff_endpos.data)
+        acia_ptr = cython.cast(
+            cython.pointer(cython.int), above_cutoff_index_array.data
+        )
+        treat_array_ptr = cython.cast(cython.pointer(cython.float), treat_array.data)
+        ctrl_array_ptr = cython.cast(cython.pointer(cython.float), ctrl_array.data)
 
         ts = acs_ptr[0]
         te = ace_ptr[0]
@@ -2075,23 +2154,25 @@ class CallerFromAlignments:
         tp = treat_array_ptr[ti]
         cp = ctrl_array_ptr[ti]
         peak_content.append((ts, te, tp, cp, ti))
-        acs_ptr += 1            # move ptr
+        acs_ptr += 1  # move ptr
         ace_ptr += 1
         acia_ptr += 1
 
         lastp = te
         for i in range(1, above_cutoff_startpos.size):
             # for everything above cutoff
-            ts = acs_ptr[0]     # get the start
-            te = ace_ptr[0]     # get the end
-            ti = acia_ptr[0]    # get the index
+            ts = acs_ptr[0]  # get the start
+            te = ace_ptr[0]  # get the end
+            ti = acia_ptr[0]  # get the index
 
-            acs_ptr += 1        # move ptr
+            acs_ptr += 1  # move ptr
             ace_ptr += 1
             acia_ptr += 1
             tp = treat_array_ptr[ti]  # get the treatment pileup
             cp = ctrl_array_ptr[ti]  # get the control pileup
-            tl = ts - lastp  # get the distance from the current point to last position of existing peak_content
+            tl = (
+                ts - lastp
+            )  # get the distance from the current point to last position of existing peak_content
 
             if tl <= lvl2_max_gap:
                 # append
@@ -2099,36 +2180,44 @@ class CallerFromAlignments:
                 lastp = te
             else:
                 # close
-                self.__close_peak_for_broad_region(peak_content,
-                                                   lvl2peaks,
-                                                   min_length,
-                                                   chrom,
-                                                   lvl2_max_gap//2,
-                                                   score_array_s)
+                self.__close_peak_for_broad_region(
+                    peak_content,
+                    lvl2peaks,
+                    min_length,
+                    chrom,
+                    lvl2_max_gap // 2,
+                    score_array_s,
+                )
 
-                peak_content = [(ts, te, tp, cp, ti),]
+                peak_content = [
+                    (ts, te, tp, cp, ti),
+                ]
                 lastp = te
 
         # save the last peak
         if peak_content:
-            self.__close_peak_for_broad_region(peak_content,
-                                               lvl2peaks,
-                                               min_length,
-                                               chrom,
-                                               lvl2_max_gap//2,
-                                               score_array_s)
+            self.__close_peak_for_broad_region(
+                peak_content,
+                lvl2peaks,
+                min_length,
+                chrom,
+                lvl2_max_gap // 2,
+                score_array_s,
+            )
 
         return
 
     @cython.cfunc
-    def __close_peak_for_broad_region(self,
-                                      peak_content: list,
-                                      peaks,
-                                      min_length: cython.int,
-                                      chrom: bytes,
-                                      smoothlen: cython.int,
-                                      score_array_s: list,
-                                      score_cutoff_s: list = []) -> bool:
+    def __close_peak_for_broad_region(
+        self,
+        peak_content: list,
+        peaks,
+        min_length: cython.int,
+        chrom: bytes,
+        smoothlen: cython.int,
+        score_array_s: list,
+        score_cutoff_s: list = [],
+    ) -> bool:
         """Close the broad peak region, output peak boundaries, peak summit
         and scores, then add the peak to peakIO object.
 
@@ -2169,27 +2258,26 @@ class CallerFromAlignments:
             tarray_qscore = self.__cal_qscore(tarray_pileup, tarray_control)
             tarray_fc = self.__cal_FE(tarray_pileup, tarray_control)
 
-            peaks.add(chrom,           # chromosome
-                      peak_content[0][0],  # start
-                      peak_content[-1][1],  # end
-                      summit=0,
-                      peak_score=mean_from_value_length(tarray_qscore, tlist_length),
-                      pileup=mean_from_value_length(tarray_pileup, tlist_length),
-                      pscore=mean_from_value_length(tarray_pscore, tlist_length),
-                      fold_change=mean_from_value_length(tarray_fc, tlist_length),
-                      qscore=mean_from_value_length(tarray_qscore, tlist_length),
-                      )
+            peaks.add(
+                chrom,  # chromosome
+                peak_content[0][0],  # start
+                peak_content[-1][1],  # end
+                summit=0,
+                peak_score=mean_from_value_length(tarray_qscore, tlist_length),
+                pileup=mean_from_value_length(tarray_pileup, tlist_length),
+                pscore=mean_from_value_length(tarray_pscore, tlist_length),
+                fold_change=mean_from_value_length(tarray_fc, tlist_length),
+                qscore=mean_from_value_length(tarray_qscore, tlist_length),
+            )
             # if chrom == "chr1" and  peak_content[0][0] == 237643 and peak_content[-1][1] == 237935:
             #    print tarray_qscore, tlist_length
             # start a new peak
             return True
 
     @cython.cfunc
-    def __add_broadpeak(self,
-                        bpeaks,
-                        chrom: bytes,
-                        lvl2peak: object,
-                        lvl1peakset: list):
+    def __add_broadpeak(
+        self, bpeaks, chrom: bytes, lvl2peak: object, lvl1peakset: list
+    ):
         """Internal function to create broad peak.
 
         *Note* lvl1peakset/strong_regions might be empty
@@ -2209,48 +2297,58 @@ class CallerFromAlignments:
         if not lvl1peakset:
             # will complement by adding 1bps start and end to this region
             # may change in the future if gappedPeak format was improved.
-            bpeaks.add(chrom, start, end,
-                       score=lvl2peak["score"],
-                       thickStart=(b"%d" % start),
-                       thickEnd=(b"%d" % end),
-                       blockNum=2,
-                       blockSizes=b"1,1",
-                       blockStarts=(b"0,%d" % (end-start-1)),
-                       pileup=lvl2peak["pileup"],
-                       pscore=lvl2peak["pscore"],
-                       fold_change=lvl2peak["fc"],
-                       qscore=lvl2peak["qscore"])
+            bpeaks.add(
+                chrom,
+                start,
+                end,
+                score=lvl2peak["score"],
+                thickStart=(b"%d" % start),
+                thickEnd=(b"%d" % end),
+                blockNum=2,
+                blockSizes=b"1,1",
+                blockStarts=(b"0,%d" % (end - start - 1)),
+                pileup=lvl2peak["pileup"],
+                pscore=lvl2peak["pscore"],
+                fold_change=lvl2peak["fc"],
+                qscore=lvl2peak["qscore"],
+            )
             return bpeaks
 
         thickStart = b"%d" % (lvl1peakset[0]["start"])
         thickEnd = b"%d" % (lvl1peakset[-1]["end"])
         blockNum = len(lvl1peakset)
         blockSizes = b",".join([b"%d" % y for y in [x["length"] for x in lvl1peakset]])
-        blockStarts = b",".join([b"%d" % x for x in getitem_then_subtract(lvl1peakset, start)])
+        blockStarts = b",".join(
+            [b"%d" % x for x in getitem_then_subtract(lvl1peakset, start)]
+        )
 
         # add 1bp left and/or right block if necessary
         if int(thickStart) != start:
             # add 1bp left block
             thickStart = b"%d" % start
             blockNum += 1
-            blockSizes = b"1,"+blockSizes
-            blockStarts = b"0,"+blockStarts
+            blockSizes = b"1," + blockSizes
+            blockStarts = b"0," + blockStarts
         if int(thickEnd) != end:
             # add 1bp right block
             thickEnd = b"%d" % end
             blockNum += 1
             blockSizes = blockSizes + b",1"
-            blockStarts = blockStarts + b"," + (b"%d" % (end-start-1))
+            blockStarts = blockStarts + b"," + (b"%d" % (end - start - 1))
 
-        bpeaks.add(chrom, start, end,
-                   score=lvl2peak["score"],
-                   thickStart=thickStart,
-                   thickEnd=thickEnd,
-                   blockNum=blockNum,
-                   blockSizes=blockSizes,
-                   blockStarts=blockStarts,
-                   pileup=lvl2peak["pileup"],
-                   pscore=lvl2peak["pscore"],
-                   fold_change=lvl2peak["fc"],
-                   qscore=lvl2peak["qscore"])
+        bpeaks.add(
+            chrom,
+            start,
+            end,
+            score=lvl2peak["score"],
+            thickStart=thickStart,
+            thickEnd=thickEnd,
+            blockNum=blockNum,
+            blockSizes=blockSizes,
+            blockStarts=blockStarts,
+            pileup=lvl2peak["pileup"],
+            pscore=lvl2peak["pscore"],
+            fold_change=lvl2peak["fc"],
+            qscore=lvl2peak["qscore"],
+        )
         return bpeaks

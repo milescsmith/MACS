@@ -15,6 +15,7 @@ the distribution).
 import cython
 from array import array as pyarray
 from math import prod
+
 # ------------------------------------
 # MACS3 modules
 # ------------------------------------
@@ -49,14 +50,14 @@ LOG10_E = 0.43429448190325176
 @cython.inline
 @cython.cfunc
 def mean_func(x):
-    return sum(x)/len(x)
+    return sum(x) / len(x)
 
 
 @cython.inline
 @cython.cfunc
 def fisher_func(x):
     # combine -log10pvalues
-    return chisq_logp_e(2*sum(x)/LOG10_E, 2*len(x), log10=True)
+    return chisq_logp_e(2 * sum(x) / LOG10_E, 2 * len(x), log10=True)
 
 
 @cython.inline
@@ -79,6 +80,7 @@ def product_func(x):
     # production of a list of values
     # only python 3.8 or above
     return prod(x)
+
 
 # ------------------------------------
 # Classes
@@ -107,6 +109,7 @@ class bedGraphTrackI:
     this class is 0-indexed and right-open.
 
     """
+
     __data: dict
     maxvalue = cython.declare(cython.float, visibility="public")
     minvalue = cython.declare(cython.float, visibility="public")
@@ -124,15 +127,20 @@ class bedGraphTrackI:
 
         """
         self.__data = {}
-        self.maxvalue = -10000000  # initial maximum value is tiny since I want safe_add_loc to update it
+        self.maxvalue = (
+            -10000000
+        )  # initial maximum value is tiny since I want safe_add_loc to update it
         self.minvalue = 10000000  # initial minimum value is large since I want safe_add_loc to update it
         self.baseline_value = baseline_value
 
     @cython.ccall
-    def add_loc(self, chromosome: bytes,
-                startpos: cython.int,
-                endpos: cython.int,
-                value: cython.float):
+    def add_loc(
+        self,
+        chromosome: bytes,
+        startpos: cython.int,
+        endpos: cython.int,
+        value: cython.float,
+    ):
         """Add a chr-start-end-value block into __data dictionary.
 
         Note, we don't check if the add_loc is called continuously on
@@ -150,8 +158,7 @@ class bedGraphTrackI:
             startpos = 0
 
         if chromosome not in self.__data:
-            self.__data[chromosome] = [pyarray('i', []),
-                                       pyarray('f', [])]
+            self.__data[chromosome] = [pyarray("i", []), pyarray("f", [])]
             c = self.__data[chromosome]
             if startpos:
                 # start pos is not 0, then add two blocks, the first
@@ -180,10 +187,13 @@ class bedGraphTrackI:
             self.minvalue = value
 
     @cython.ccall
-    def add_loc_wo_merge(self, chromosome: bytes,
-                         startpos: cython.int,
-                         endpos: cython.int,
-                         value: cython.float):
+    def add_loc_wo_merge(
+        self,
+        chromosome: bytes,
+        startpos: cython.int,
+        endpos: cython.int,
+        value: cython.float,
+    ):
         """Add a chr-start-end-value block into __data dictionary.
 
         Note, we don't check if the add_loc is called continuously on
@@ -201,8 +211,7 @@ class bedGraphTrackI:
             value = self.baseline_value
 
         if chromosome not in self.__data:
-            self.__data[chromosome] = [pyarray('i', []),
-                                       pyarray('f', [])]
+            self.__data[chromosome] = [pyarray("i", []), pyarray("f", [])]
             c = self.__data[chromosome]
             if startpos:
                 # start pos is not 0, then add two blocks, the first
@@ -218,10 +227,7 @@ class bedGraphTrackI:
             self.minvalue = value
 
     @cython.ccall
-    def add_chrom_data(self,
-                       chromosome: bytes,
-                       p: pyarray,
-                       v: pyarray):
+    def add_chrom_data(self, chromosome: bytes, p: pyarray, v: pyarray):
         """Add a pv data to a chromosome. Replace the previous data.
 
         p: a pyarray object 'i' for positions
@@ -242,9 +248,7 @@ class bedGraphTrackI:
         return
 
     @cython.ccall
-    def add_chrom_data_PV(self,
-                          chromosome: bytes,
-                          pv: cnp.ndarray):
+    def add_chrom_data_PV(self, chromosome: bytes, pv: cnp.ndarray):
         """Add a pv data to a chromosome. Replace the previous data.
 
         This is a kinda silly function to waste time and convert a PV
@@ -256,10 +260,9 @@ class bedGraphTrackI:
         maxv: cython.float
         minv: cython.float
 
-        self.__data[chromosome] = [pyarray('i', pv['p']),
-                                   pyarray('f', pv['v'])]
-        minv = pv['v'].min()
-        maxv = pv['v'].max()
+        self.__data[chromosome] = [pyarray("i", pv["p"]), pyarray("f", pv["v"])]
+        minv = pv["v"].min()
+        maxv = pv["v"].max()
         if maxv > self.maxvalue:
             self.maxvalue = maxv
         if minv < self.minvalue:
@@ -268,8 +271,7 @@ class bedGraphTrackI:
 
     @cython.ccall
     def destroy(self) -> bool:
-        """ destroy content, free memory.
-        """
+        """destroy content, free memory."""
         chrs: set
         chrom: bytes
 
@@ -294,9 +296,7 @@ class bedGraphTrackI:
 
     @cython.ccall
     def get_chr_names(self) -> set:
-        """Return all the chromosome names stored.
-
-        """
+        """Return all the chromosome names stored."""
         return set(sorted(self.__data.keys()))
 
     @cython.ccall
@@ -314,9 +314,7 @@ class bedGraphTrackI:
 
     @cython.cfunc
     def merge_regions(self):
-        """Merge nearby regions with the same value.
-
-        """
+        """Merge nearby regions with the same value."""
         # new_pre_pos: cython.int
         pos: cython.int
         i: cython.int
@@ -332,8 +330,18 @@ class bedGraphTrackI:
             vnext = iter(v).__next__
 
             # new arrays
-            new_pos = pyarray('L', [pnext(),])
-            new_value = pyarray('f', [vnext(),])
+            new_pos = pyarray(
+                "L",
+                [
+                    pnext(),
+                ],
+            )
+            new_value = pyarray(
+                "f",
+                [
+                    vnext(),
+                ],
+            )
 
             newpa = new_pos.append
             newva = new_value.append
@@ -377,8 +385,8 @@ class bedGraphTrackI:
             vnext = iter(v).__next__
 
             # new arrays
-            new_pos = pyarray('L', [])
-            new_value = pyarray('f', [])
+            new_pos = pyarray("L", [])
+            new_value = pyarray("f", [])
             # new_pre_pos = 0
             new_pre_value = 0
 
@@ -428,37 +436,39 @@ class bedGraphTrackI:
         sum_v = 0
         max_v = -100000
         min_v = 100000
-        for (p, v) in self.__data.values():
+        for p, v in self.__data.values():
             # for each chromosome
             pre_p = 0
             for i in range(len(p)):
                 # for each region
-                ln = p[i]-pre_p
-                sum_v += v[i]*ln
+                ln = p[i] - pre_p
+                sum_v += v[i] * ln
                 n_v += ln
                 pre_p = p[i]
             max_v = max(max(v), max_v)
             min_v = min(min(v), min_v)
-        mean_v = sum_v/n_v
+        mean_v = sum_v / n_v
         variance = 0.0
-        for (p, v) in self.__data.values():
+        for p, v in self.__data.values():
             for i in range(len(p)):
                 # for each region
-                tmp = v[i]-mean_v
-                ln = p[i]-pre_p
-                variance += tmp*tmp*ln
+                tmp = v[i] - mean_v
+                ln = p[i] - pre_p
+                variance += tmp * tmp * ln
                 pre_p = p[i]
 
-        variance /= float(n_v-1)
+        variance /= float(n_v - 1)
         std_v = sqrt(variance)
         return (sum_v, n_v, max_v, min_v, mean_v, std_v)
 
     @cython.ccall
-    def call_peaks(self,
-                   cutoff: cython.float = 1,
-                   min_length: cython.int = 200,
-                   max_gap: cython.int = 50,
-                   call_summits: bool = False):
+    def call_peaks(
+        self,
+        cutoff: cython.float = 1,
+        min_length: cython.int = 200,
+        max_gap: cython.int = 50,
+        call_summits: bool = False,
+    ):
         """This function try to find regions within which, scores
         are continuously higher than a given cutoff.
 
@@ -491,27 +501,29 @@ class bedGraphTrackI:
         chrs: set
 
         chrs = self.get_chr_names()
-        peaks = PeakIO()                      # dictionary to save peaks
+        peaks = PeakIO()  # dictionary to save peaks
         for chrom in sorted(chrs):
             peak_content = None
             # peak_length = 0
             (ps, vs) = self.get_data_by_chr(chrom)  # arrays for position and values
-            psn = iter(ps).__next__         # assign the next function to a viable to speed up
+            psn = iter(ps).__next__  # assign the next function to a viable to speed up
             vsn = iter(vs).__next__
             x = 0
-            pre_p = 0                   # remember previous position
+            pre_p = 0  # remember previous position
             while True:
                 # find the first region above cutoff
-                try:                    # try to read the first data range for this chrom
+                try:  # try to read the first data range for this chrom
                     p = psn()
                     v = vsn()
                 except Exception:
                     break
-                x += 1                  # index for the next point
+                x += 1  # index for the next point
                 if v >= cutoff:
-                    peak_content = [(pre_p, p, v),]
+                    peak_content = [
+                        (pre_p, p, v),
+                    ]
                     pre_p = p
-                    break               # found the first range above cutoff
+                    break  # found the first range above cutoff
                 else:
                     pre_p = p
 
@@ -528,67 +540,70 @@ class bedGraphTrackI:
                     peak_content.append((pre_p, p, v))
                 else:
                     # when the gap is not allowed, close this peak
-                    self.__close_peak(peak_content,
-                                      peaks,
-                                      min_length,
-                                      chrom)  # , smoothlen=max_gap / 2)
+                    self.__close_peak(
+                        peak_content, peaks, min_length, chrom
+                    )  # , smoothlen=max_gap / 2)
                     # start a new peak
-                    peak_content = [(pre_p, p, v),]
+                    peak_content = [
+                        (pre_p, p, v),
+                    ]
                 pre_p = p
 
             # save the last peak
             if not peak_content:
                 continue
-            self.__close_peak(peak_content,
-                              peaks,
-                              min_length,
-                              chrom)  # , smoothlen=max_gap / 2)
+            self.__close_peak(
+                peak_content, peaks, min_length, chrom
+            )  # , smoothlen=max_gap / 2)
         return peaks
 
     @cython.cfunc
-    def __close_peak(self,
-                     peak_content: list,
-                     peaks,
-                     min_length: cython.int,
-                     chrom: bytes) -> bool:
-        tsummit: list           # list for temporary summits
+    def __close_peak(
+        self, peak_content: list, peaks, min_length: cython.int, chrom: bytes
+    ) -> bool:
+        tsummit: list  # list for temporary summits
         peak_length: cython.int
         summit: cython.int
         tstart: cython.int
         tend: cython.int
         summit_value: cython.float
         tvalue: cython.float
-        peak_length = peak_content[-1][1]-peak_content[0][0]
+        peak_length = peak_content[-1][1] - peak_content[0][0]
         if peak_length >= min_length:  # if the peak is too small, reject it
             tsummit = []
             summit = 0
             summit_value = 0
-            for (tstart, tend, tvalue) in peak_content:
+            for tstart, tend, tvalue in peak_content:
                 if not summit_value or summit_value < tvalue:
-                    tsummit = [cython.cast(cython.int, (tend+tstart)/2),]
+                    tsummit = [
+                        cython.cast(cython.int, (tend + tstart) / 2),
+                    ]
                     summit_value = tvalue
                 elif summit_value == tvalue:
-                    tsummit.append(cython.cast(cython.int, (tend+tstart)/2))
-            summit = tsummit[cython.cast(cython.int, (len(tsummit)+1)/2)-1]
-            peaks.add(chrom,
-                      peak_content[0][0],
-                      peak_content[-1][1],
-                      summit=summit,
-                      peak_score=summit_value,
-                      pileup=0,
-                      pscore=0,
-                      fold_change=0,
-                      qscore=0
-                      )
+                    tsummit.append(cython.cast(cython.int, (tend + tstart) / 2))
+            summit = tsummit[cython.cast(cython.int, (len(tsummit) + 1) / 2) - 1]
+            peaks.add(
+                chrom,
+                peak_content[0][0],
+                peak_content[-1][1],
+                summit=summit,
+                peak_score=summit_value,
+                pileup=0,
+                pscore=0,
+                fold_change=0,
+                qscore=0,
+            )
             return True
 
     @cython.ccall
-    def call_broadpeaks(self,
-                        lvl1_cutoff: cython.float = 500,
-                        lvl2_cutoff: cython.float = 100,
-                        min_length: cython.int = 200,
-                        lvl1_max_gap: cython.int = 50,
-                        lvl2_max_gap: cython.int = 400):
+    def call_broadpeaks(
+        self,
+        lvl1_cutoff: cython.float = 500,
+        lvl2_cutoff: cython.float = 100,
+        min_length: cython.int = 200,
+        lvl1_max_gap: cython.int = 50,
+        lvl2_max_gap: cython.int = 400,
+    ):
         """This function try to find enriched regions within which,
         scores are continuously higher than a given cutoff for level
         1, and link them using the gap above level 2 cutoff with a
@@ -609,20 +624,28 @@ class bedGraphTrackI:
         j: cython.int
         chrs: set
         lvl1: PeakContent
-        lvl2: PeakContent   # PeakContent class object
+        lvl2: PeakContent  # PeakContent class object
         lvl1peakschrom: list
         lvl2peakschrom: list
 
-        assert lvl1_cutoff > lvl2_cutoff, "level 1 cutoff should be larger than level 2."
-        assert lvl1_max_gap < lvl2_max_gap, "level 2 maximum gap should be larger than level 1."
-        lvl1_peaks = self.call_peaks(cutoff=lvl1_cutoff,
-                                     min_length=min_length,
-                                     max_gap=lvl1_max_gap,
-                                     call_summits=False)
-        lvl2_peaks = self.call_peaks(cutoff=lvl2_cutoff,
-                                     min_length=min_length,
-                                     max_gap=lvl2_max_gap,
-                                     call_summits=False)
+        assert lvl1_cutoff > lvl2_cutoff, (
+            "level 1 cutoff should be larger than level 2."
+        )
+        assert lvl1_max_gap < lvl2_max_gap, (
+            "level 2 maximum gap should be larger than level 1."
+        )
+        lvl1_peaks = self.call_peaks(
+            cutoff=lvl1_cutoff,
+            min_length=min_length,
+            max_gap=lvl1_max_gap,
+            call_summits=False,
+        )
+        lvl2_peaks = self.call_peaks(
+            cutoff=lvl2_cutoff,
+            min_length=min_length,
+            max_gap=lvl2_max_gap,
+            call_summits=False,
+        )
         chrs = lvl1_peaks.get_chr_names()
         broadpeaks = BroadPeakIO()
         # use lvl2_peaks as linking regions between lvl1_peaks
@@ -630,7 +653,7 @@ class bedGraphTrackI:
             lvl1peakschrom = lvl1_peaks.get_data_from_chrom(chrom)
             lvl2peakschrom = lvl2_peaks.get_data_from_chrom(chrom)
             lvl1peakschrom_next = iter(lvl1peakschrom).__next__
-            tmppeakset = []             # to temporarily store lvl1 region inside a lvl2 region
+            tmppeakset = []  # to temporarily store lvl1 region inside a lvl2 region
             # our assumption is lvl1 regions should be included in lvl2 regions
             try:
                 lvl1 = lvl1peakschrom_next()
@@ -638,34 +661,30 @@ class bedGraphTrackI:
                     # for each lvl2 peak, find all lvl1 peaks inside
                     lvl2 = lvl2peakschrom[i]
                     while True:
-                        if lvl2["start"] <= lvl1["start"] and lvl1["end"] <= lvl2["end"]:
+                        if (
+                            lvl2["start"] <= lvl1["start"]
+                            and lvl1["end"] <= lvl2["end"]
+                        ):
                             tmppeakset.append(lvl1)
                             lvl1 = lvl1peakschrom_next()
                         else:
-                            self.__add_broadpeak(broadpeaks,
-                                                 chrom,
-                                                 lvl2,
-                                                 tmppeakset)
+                            self.__add_broadpeak(broadpeaks, chrom, lvl2, tmppeakset)
                             tmppeakset = []
                             break
             except StopIteration:
                 self.__add_broadpeak(broadpeaks, chrom, lvl2, tmppeakset)
                 tmppeakset = []
-                for j in range(i+1, len(lvl2peakschrom)):
-                    self.__add_broadpeak(broadpeaks,
-                                         chrom,
-                                         lvl2peakschrom[j],
-                                         tmppeakset)
+                for j in range(i + 1, len(lvl2peakschrom)):
+                    self.__add_broadpeak(
+                        broadpeaks, chrom, lvl2peakschrom[j], tmppeakset
+                    )
         return broadpeaks
 
     @cython.cfunc
-    def __add_broadpeak(self,
-                        bpeaks,
-                        chrom: bytes,
-                        lvl2peak: PeakContent,
-                        lvl1peakset: list):
-        """Internal function to create broad peak.
-        """
+    def __add_broadpeak(
+        self, bpeaks, chrom: bytes, lvl2peak: PeakContent, lvl1peakset: list
+    ):
+        """Internal function to create broad peak."""
         start: cython.int
         end: cython.int
         blockNum: cython.int
@@ -683,49 +702,57 @@ class bedGraphTrackI:
             # try:
             # will complement by adding 1bps start and end to this region
             # may change in the future if gappedPeak format was improved.
-            bpeaks.add(chrom, start, end,
-                       score=lvl2peak["score"],
-                       thickStart=(b"%d" % start),
-                       thickEnd=(b"%d" % end),
-                       blockNum=2,
-                       blockSizes=b"1,1",
-                       blockStarts=(b"0,%d" % (end-start-1)),
-                       pileup=lvl2peak["pileup"],
-                       pscore=lvl2peak["pscore"],
-                       fold_change=lvl2peak["fc"],
-                       qscore=lvl2peak["qscore"])
+            bpeaks.add(
+                chrom,
+                start,
+                end,
+                score=lvl2peak["score"],
+                thickStart=(b"%d" % start),
+                thickEnd=(b"%d" % end),
+                blockNum=2,
+                blockSizes=b"1,1",
+                blockStarts=(b"0,%d" % (end - start - 1)),
+                pileup=lvl2peak["pileup"],
+                pscore=lvl2peak["pscore"],
+                fold_change=lvl2peak["fc"],
+                qscore=lvl2peak["qscore"],
+            )
             return bpeaks
 
         thickStart = b"%d" % lvl1peakset[0]["start"]
         thickEnd = b"%d" % lvl1peakset[-1]["end"]
         blockNum = len(lvl1peakset)
         blockSizes = b",".join([b"%d" % x["length"] for x in lvl1peakset])
-        blockStarts = b",".join([b"%d" % (x["start"]-start) for x in lvl1peakset])
+        blockStarts = b",".join([b"%d" % (x["start"] - start) for x in lvl1peakset])
 
         if int(thickStart) != start:
             # add 1bp left block
             thickStart = b"%d" % start
             blockNum += 1
-            blockSizes = b"1,"+blockSizes
-            blockStarts = b"0,"+blockStarts
+            blockSizes = b"1," + blockSizes
+            blockStarts = b"0," + blockStarts
         if int(thickEnd) != end:
             # add 1bp right block
             thickEnd = b"%d" % end
             blockNum += 1
-            blockSizes = blockSizes+b",1"
-            blockStarts = blockStarts + b"," + (b"%d" % (end-start-1))
+            blockSizes = blockSizes + b",1"
+            blockStarts = blockStarts + b"," + (b"%d" % (end - start - 1))
 
-        bpeaks.add(chrom, start, end,
-                   score=lvl2peak["score"],
-                   thickStart=thickStart,
-                   thickEnd=thickEnd,
-                   blockNum=blockNum,
-                   blockSizes=blockSizes,
-                   blockStarts=blockStarts,
-                   pileup=lvl2peak["pileup"],
-                   pscore=lvl2peak["pscore"],
-                   fold_change=lvl2peak["fc"],
-                   qscore=lvl2peak["qscore"])
+        bpeaks.add(
+            chrom,
+            start,
+            end,
+            score=lvl2peak["score"],
+            thickStart=thickStart,
+            thickEnd=thickEnd,
+            blockNum=blockNum,
+            blockSizes=blockSizes,
+            blockStarts=blockStarts,
+            pileup=lvl2peak["pileup"],
+            pscore=lvl2peak["pscore"],
+            fold_change=lvl2peak["fc"],
+            qscore=lvl2peak["qscore"],
+        )
         return bpeaks
 
     @cython.ccall
@@ -805,7 +832,9 @@ class bedGraphTrackI:
                         # no more value chunk in bedGraph
                         break
                 else:
-                    raise Exception(f"no way here! prev position:{pre_p}; position:{p}; value:{v}; peak start:{peak_s}; peak end:{peak_e}")
+                    raise Exception(
+                        f"no way here! prev position:{pre_p}; position:{p}; value:{v}; peak start:{peak_s}; peak end:{peak_e}"
+                    )
 
             # save the last peak
             if peak_content:
@@ -814,12 +843,10 @@ class bedGraphTrackI:
 
     @cython.ccall
     def total(self) -> cython.int:
-        """Return the number of regions in this object.
-
-        """
+        """Return the number of regions in this object."""
         t: cython.int
         t = 0
-        for (p, v) in self.__data.values():
+        for p, v in self.__data.values():
             t += len(p)
         return t
 
@@ -886,7 +913,9 @@ class bedGraphTrackI:
         nr_tracks = len(bdgTracks) + 1  # +1 for self
         assert nr_tracks >= 2, "Specify at least one more bdg objects."
         for i, bdgTrack in enumerate(bdgTracks):
-            assert isinstance(bdgTrack, bedGraphTrackI), "bdgTrack{} is not a bedGraphTrackI object".format(i + 1)
+            assert isinstance(bdgTrack, bedGraphTrackI), (
+                "bdgTrack{} is not a bedGraphTrackI object".format(i + 1)
+            )
 
         if func == "max":
             f = max
@@ -902,14 +931,20 @@ class bedGraphTrackI:
             if nr_tracks == 2:
                 f = subtract_func
             else:
-                raise Exception(f"Only one more bdg object is allowed, but provided {nr_tracks-1}")
+                raise Exception(
+                    f"Only one more bdg object is allowed, but provided {nr_tracks - 1}"
+                )
         elif func == "divide":
             if nr_tracks == 2:
                 f = divide_func
             else:
-                raise Exception(f"Only one more bdg object is allowed, but provided {nr_tracks-1}")
+                raise Exception(
+                    f"Only one more bdg object is allowed, but provided {nr_tracks - 1}"
+                )
         else:
-            raise Exception("Invalid function {func}! Choose from 'sum', 'subtract' (only for two bdg objects), 'product', 'divide' (only for two bdg objects), 'max', 'mean' and 'fisher'. ")
+            raise Exception(
+                "Invalid function {func}! Choose from 'sum', 'subtract' (only for two bdg objects), 'product', 'divide' (only for two bdg objects), 'max', 'mean' and 'fisher'. "
+            )
 
         ret = bedGraphTrackI()
 
@@ -919,7 +954,9 @@ class bedGraphTrackI:
 
         for chrom in sorted(common_chr):
             datas = [self.get_data_by_chr(chrom)]
-            datas.extend([bdgTracks[i].get_data_by_chr(chrom) for i in range(len(bdgTracks))])
+            datas.extend(
+                [bdgTracks[i].get_data_by_chr(chrom) for i in range(len(bdgTracks))]
+            )
 
             ps, vs, pn, vn = [], [], [], []
             for data in datas:
@@ -928,7 +965,9 @@ class bedGraphTrackI:
                 vs.append(data[1])
                 vn.append(iter(vs[-1]).__next__)
 
-            pre_p = 0                   # remember the previous position in the new bedGraphTrackI object ret
+            pre_p = (
+                0  # remember the previous position in the new bedGraphTrackI object ret
+            )
             try:
                 ps_cur = [pn[i]() for i in range(len(pn))]
                 vs_cur = [vn[i]() for i in range(len(pn))]
@@ -961,7 +1000,7 @@ class bedGraphTrackI:
         """
         i: cython.int
 
-        for (p, s) in self.__data.values():
+        for p, s in self.__data.values():
             for i in range(len(s)):
                 s[i] = func(s[i])
         self.maxvalue = func(self.maxvalue)
@@ -1021,11 +1060,11 @@ class bedGraphTrackI:
         # nhval = 0
 
         N = sum(pvalue_stat.values())  # total length
-        k = 1                          # rank
+        k = 1  # rank
         f = -log10(N)
         # pre_v = -2147483647
         # pre_l = 0
-        pre_q = 2147483647              # save the previous q-value
+        pre_q = 2147483647  # save the previous q-value
 
         # calculate qscore for each pscore
         pqtable = {}
@@ -1034,7 +1073,7 @@ class bedGraphTrackI:
             v = unique_values[i]
             # l = pvalue_stat[v]
             q = v + (log10(k) + f)
-            q = max(0, min(pre_q, q))           # make q-score monotonic
+            q = max(0, min(pre_q, q))  # make q-score monotonic
             pqtable[v] = q
             # pre_v = v
             pre_q = q
@@ -1068,7 +1107,7 @@ class bedGraphTrackI:
         assert isinstance(bdgTrack2, bedGraphTrackI), "not a bedGraphTrackI object"
 
         # 1: region in bdgTrack2; 2: value; 3: length with the value
-        ret = [[], pyarray('f', []), pyarray('L', [])]
+        ret = [[], pyarray("f", []), pyarray("L", [])]
         radd = ret[0].append
         vadd = ret[1].append
         ladd = ret[2].append
@@ -1102,9 +1141,9 @@ class bedGraphTrackI:
                     if p1 < p2:
                         # clip a region from pre_p to p1, then set pre_p as p1.
                         if v2 > 0:
-                            radd(str(chrom)+"."+str(pre_p)+"."+str(p1))
+                            radd(str(chrom) + "." + str(pre_p) + "." + str(p1))
                             vadd(v1)
-                            ladd(p1-pre_p)
+                            ladd(p1 - pre_p)
                         pre_p = p1
                         # call for the next p1 and v1
                         p1 = p1n()
@@ -1113,9 +1152,9 @@ class bedGraphTrackI:
                         # clip a region from pre_p to p2, then set
                         # pre_p as p2.
                         if v2 > 0:
-                            radd(str(chrom)+"."+str(pre_p)+"."+str(p2))
+                            radd(str(chrom) + "." + str(pre_p) + "." + str(p2))
                             vadd(v1)
-                            ladd(p2-pre_p)
+                            ladd(p2 - pre_p)
                         pre_p = p2
                         # call for the next p2 and v2
                         p2 = p2n()
@@ -1123,9 +1162,9 @@ class bedGraphTrackI:
                     elif p1 == p2:
                         # from pre_p to p1 or p2, then set pre_p as p1 or p2.
                         if v2 > 0:
-                            radd(str(chrom)+"."+str(pre_p)+"."+str(p1))
+                            radd(str(chrom) + "." + str(pre_p) + "." + str(p1))
                             vadd(v1)
-                            ladd(p1-pre_p)
+                            ladd(p1 - pre_p)
                         pre_p = p1
                         # call for the next p1, v1, p2, v2.
                         p1 = p1n()
@@ -1163,7 +1202,7 @@ class bedGraphTrackI:
         assert isinstance(bdgTrack2, bedGraphTrackI), "not a bedGraphTrackI object"
 
         # 0: bin location (chrom, position); 1: value; 2: number of bins in this region
-        ret = [[], pyarray('f', []), pyarray('i', [])]
+        ret = [[], pyarray("f", []), pyarray("i", [])]
         padd = ret[0].append
         vadd = ret[1].append
         ladd = ret[2].append
@@ -1208,7 +1247,9 @@ class bedGraphTrackI:
                         v1 = v1n()
                     elif p2 < p1:
                         # clip a region from pre_p to p2, then set pre_p as p2.
-                        if v2 != 0:  # 0 means it's a gap region, we should have value > 1
+                        if (
+                            v2 != 0
+                        ):  # 0 means it's a gap region, we should have value > 1
                             padd((chrom, p2))
                             vadd(v1)
                             ladd(int(v2))
@@ -1218,7 +1259,7 @@ class bedGraphTrackI:
                         v2 = v2n()
                     elif p1 == p2:
                         # from pre_p to p1 or p2, then set pre_p as p1 or p2.
-                        if v2 != 0: # 0 means it's a gap region, we should have 1 or -1
+                        if v2 != 0:  # 0 means it's a gap region, we should have 1 or -1
                             padd((chrom, p2))
                             vadd(v1)
                             ladd(int(v2))
@@ -1235,9 +1276,9 @@ class bedGraphTrackI:
         return ret
 
     @cython.ccall
-    def make_ScoreTrackII_for_macs(self, bdgTrack2,
-                                   depth1: float = 1.0,
-                                   depth2: float = 1.0):
+    def make_ScoreTrackII_for_macs(
+        self, bdgTrack2, depth1: float = 1.0, depth2: float = 1.0
+    ):
         """A modified overlie function for MACS v2.
 
         effective_depth_in_million: sequencing depth in million after
@@ -1256,10 +1297,11 @@ class bedGraphTrackI:
         v2: cython.float
         chrom: bytes
 
-        assert isinstance(bdgTrack2, bedGraphTrackI), "bdgTrack2 is not a bedGraphTrackI object"
+        assert isinstance(bdgTrack2, bedGraphTrackI), (
+            "bdgTrack2 is not a bedGraphTrackI object"
+        )
 
-        ret = ScoreTrackII(treat_depth=depth1,
-                           ctrl_depth=depth2)
+        ret = ScoreTrackII(treat_depth=depth1, ctrl_depth=depth2)
         retadd = ret.add
 
         chr1 = set(self.get_chr_names())
@@ -1279,7 +1321,7 @@ class bedGraphTrackI:
 
             # this is the maximum number of locations needed to be
             # recorded in scoreTrackI for this chromosome.
-            chrom_max_len = len(p1s)+len(p2s)
+            chrom_max_len = len(p1s) + len(p2s)
 
             ret.add_chromosome(chrom, chrom_max_len)
 
@@ -1327,12 +1369,14 @@ class bedGraphTrackI:
         return ret
 
     @cython.ccall
-    def cutoff_analysis(self,
-                        max_gap: cython.int,
-                        min_length: cython.int,
-                        steps: cython.int = 100,
-                        min_score: cython.float = 0,
-                        max_score: cython.float = 1000) -> str:
+    def cutoff_analysis(
+        self,
+        max_gap: cython.int,
+        min_length: cython.int,
+        steps: cython.int = 100,
+        min_score: cython.float = 0,
+        max_score: cython.float = 1000,
+    ) -> str:
         """
         Cutoff analysis function for bedGraphTrackI object.
 
@@ -1412,7 +1456,7 @@ class bedGraphTrackI:
         minv = max(min_score, self.minvalue)
         maxv = min(self.maxvalue, max_score)
 
-        s = float(maxv - minv)/steps
+        s = float(maxv - minv) / steps
 
         # a list of possible cutoff values from minv to maxv with step of s
         cutoff_list = [round(value, 3) for value in np.arange(minv, maxv, s)]
@@ -1427,8 +1471,8 @@ class bedGraphTrackI:
 
             for n in range(len(cutoff_list)):
                 cutoff = cutoff_list[n]
-                total_l = 0           # total length of peaks
-                total_p = 0           # total number of peaks
+                total_l = 0  # total length of peaks
+                total_p = 0  # total number of peaks
 
                 # get the regions with scores above cutoffs. This is
                 # not an optimized method. It would be better to store
@@ -1437,7 +1481,7 @@ class bedGraphTrackI:
                 # end positions of regions where score is above cutoff
                 above_cutoff_endpos = pos_array[above_cutoff]
                 # start positions of regions where score is above cutoff
-                above_cutoff_startpos = pos_array[above_cutoff-1]
+                above_cutoff_startpos = pos_array[above_cutoff - 1]
 
                 if above_cutoff_endpos.size == 0:
                     continue
@@ -1448,7 +1492,9 @@ class bedGraphTrackI:
 
                 ts = acs_next()
                 te = ace_next()
-                peak_content = [(ts, te),]
+                peak_content = [
+                    (ts, te),
+                ]
                 lastp = te
 
                 for i in range(1, above_cutoff_startpos.size):
@@ -1463,7 +1509,9 @@ class bedGraphTrackI:
                         if peak_length >= min_length:
                             total_l += peak_length
                             total_p += 1
-                        peak_content = [(ts, te),]
+                        peak_content = [
+                            (ts, te),
+                        ]
                     lastp = te
 
                 if peak_content:
@@ -1477,14 +1525,19 @@ class bedGraphTrackI:
 
         # prepare the returnning text
         ret_list = ["score\tnpeaks\tlpeaks\tavelpeak\n"]
-        for n in range(len(cutoff_list)-1, -1, -1):
+        for n in range(len(cutoff_list) - 1, -1, -1):
             cutoff = cutoff_list[n]
             if cutoff_npeaks[n] > 0:
-                ret_list.append("%.2f\t%d\t%d\t%.2f\n" % (cutoff,
-                                                          cutoff_npeaks[n],
-                                                          cutoff_lpeaks[n],
-                                                          cutoff_lpeaks[n]/cutoff_npeaks[n]))
-        ret = ''.join(ret_list)
+                ret_list.append(
+                    "%.2f\t%d\t%d\t%.2f\n"
+                    % (
+                        cutoff,
+                        cutoff_npeaks[n],
+                        cutoff_lpeaks[n],
+                        cutoff_lpeaks[n] / cutoff_npeaks[n],
+                    )
+                )
+        ret = "".join(ret_list)
         return ret
 
 
@@ -1513,6 +1566,7 @@ class bedGraphTrackII:
     (end) positions and values.
 
     """
+
     __data: dict
     maxvalue = cython.declare(cython.float, visibility="public")
     minvalue = cython.declare(cython.float, visibility="public")
@@ -1520,9 +1574,9 @@ class bedGraphTrackII:
     buffer_size: int
     __size: dict
 
-    def __init__(self,
-                 baseline_value: cython.float = 0,
-                 buffer_size: cython.int = 100000):
+    def __init__(
+        self, baseline_value: cython.float = 0, buffer_size: cython.int = 100000
+    ):
         """
         baseline_value is the value to fill in the regions not defined
         in bedGraph. For example, if the bedGraph is like:
@@ -1535,16 +1589,21 @@ class bedGraphTrackII:
         """
         self.__data = {}
         self.__size = {}
-        self.maxvalue = -10000000  # initial maximum value is tiny since I want safe_add_loc to update it
+        self.maxvalue = (
+            -10000000
+        )  # initial maximum value is tiny since I want safe_add_loc to update it
         self.minvalue = 10000000  # initial minimum value is large since I want safe_add_loc to update it
         self.baseline_value = baseline_value
         self.buffer_size = 100000
 
     @cython.ccall
-    def add_loc(self, chromosome: bytes,
-                startpos: cython.int,
-                endpos: cython.int,
-                value: cython.float):
+    def add_loc(
+        self,
+        chromosome: bytes,
+        startpos: cython.int,
+        endpos: cython.int,
+        value: cython.float,
+    ):
         """Add a chr-start-end-value block into __data dictionary.
 
         Note, we don't check if the add_loc is called continuously on
@@ -1566,8 +1625,9 @@ class bedGraphTrackII:
         if chromosome not in self.__data:
             i = 0
             # first element in the chromosome
-            self.__data[chromosome] = np.zeros(shape=self.buffer_size,
-                                               dtype=[('p', 'u4'), ('v', 'f4')])
+            self.__data[chromosome] = np.zeros(
+                shape=self.buffer_size, dtype=[("p", "u4"), ("v", "f4")]
+            )
             c = self.__data[chromosome]
             if startpos > 0:
                 # start pos is not 0, then add two blocks, the first
@@ -1580,16 +1640,15 @@ class bedGraphTrackII:
             c = self.__data[chromosome]
             i = self.__size[chromosome]
             # get the preceding region
-            pre_v = c[i-1][1]  # which is quicker? c[i-1][1] or c["v"][i-1]?
+            pre_v = c[i - 1][1]  # which is quicker? c[i-1][1] or c["v"][i-1]?
 
             # if this region is next to the previous one.
             if pre_v == value:
                 # if value is the same, simply extend it.
-                c[i-1][0] = endpos
+                c[i - 1][0] = endpos
             else:
                 if i % self.buffer_size == 0:
-                    self.__data[chromosome].resize(i+self.buffer_size,
-                                                   refcheck=False)
+                    self.__data[chromosome].resize(i + self.buffer_size, refcheck=False)
                 # otherwise, add a new region
                 c[i] = (endpos, value)
                 i += 1
@@ -1597,10 +1656,13 @@ class bedGraphTrackII:
         self.__size[chromosome] = i
 
     @cython.ccall
-    def add_loc_wo_merge(self, chromosome: bytes,
-                         startpos: cython.int,
-                         endpos: cython.int,
-                         value: cython.float):
+    def add_loc_wo_merge(
+        self,
+        chromosome: bytes,
+        startpos: cython.int,
+        endpos: cython.int,
+        value: cython.float,
+    ):
         """Add a chr-start-end-value block into __data dictionary.
 
         Note, we don't check if the add_loc is called continuously on
@@ -1622,8 +1684,9 @@ class bedGraphTrackII:
         if chromosome not in self.__data:
             i = 0
             # first element in the chromosome
-            self.__data[chromosome] = np.zeros(shape=self.buffer_size,
-                                               dtype=[('p', 'u4'), ('v', 'f4')])
+            self.__data[chromosome] = np.zeros(
+                shape=self.buffer_size, dtype=[("p", "u4"), ("v", "f4")]
+            )
             c = self.__data[chromosome]
             if startpos > 0:
                 # start pos is not 0, then add two blocks, the first
@@ -1637,8 +1700,7 @@ class bedGraphTrackII:
             i = self.__size[chromosome]
 
             if i % self.buffer_size == 0:
-                self.__data[chromosome].resize(i+self.buffer_size,
-                                               refcheck=False)
+                self.__data[chromosome].resize(i + self.buffer_size, refcheck=False)
             # otherwise, add a new region
             c[i] = (endpos, value)
             i += 1
@@ -1646,9 +1708,7 @@ class bedGraphTrackII:
         self.__size[chromosome] = i
 
     @cython.ccall
-    def add_chrom_data(self,
-                       chromosome: bytes,
-                       pv: cnp.ndarray):
+    def add_chrom_data(self, chromosome: bytes, pv: cnp.ndarray):
         """Add a pv data to a chromosome. Replace the previous data.
 
         This is a kinda silly function to waste time and convert a PV
@@ -1664,18 +1724,15 @@ class bedGraphTrackII:
 
     @cython.ccall
     def destroy(self) -> bool:
-        """ destroy content, free memory.
-        """
+        """destroy content, free memory."""
         chrs: set
         chrom: bytes
 
         chrs = self.get_chr_names()
         for chrom in sorted(chrs):
             if chrom in self.__data:
-                self.__data[chrom].resize(self.buffer_size,
-                                          refcheck=False)
-                self.__data[chrom].resize(0,
-                                          refcheck=False)
+                self.__data[chrom].resize(self.buffer_size, refcheck=False)
+                self.__data[chrom].resize(0, refcheck=False)
                 self.__data[chrom] = None
                 self.__data.pop(chrom)
                 self.__size[chrom] = 0
@@ -1698,10 +1755,10 @@ class bedGraphTrackII:
 
         for c in chrnames:
             self.__data[c].resize((self.__size[c]), refcheck=False)
-            self.__data[c].sort(order=['p'])
+            self.__data[c].sort(order=["p"])
 
-            minv = self.__data[c]['v'].min()
-            maxv = self.__data[c]['v'].max()
+            minv = self.__data[c]["v"].min()
+            maxv = self.__data[c]["v"].max()
             if maxv > self.maxvalue:
                 self.maxvalue = maxv
             if minv < self.minvalue:
@@ -1722,9 +1779,7 @@ class bedGraphTrackII:
 
     @cython.ccall
     def get_chr_names(self) -> set:
-        """Return all the chromosome names stored.
-
-        """
+        """Return all the chromosome names stored."""
         return set(sorted(self.__data.keys()))
 
     @cython.ccall
@@ -1744,11 +1799,11 @@ class bedGraphTrackII:
         chrs = self.get_chr_names()
         for chrom in sorted(chrs):
             d = self.__data[chrom]
-            d = d[d['v'] > cutoff]
+            d = d[d["v"] > cutoff]
             self.__data[chrom] = d
             self.__size[chrom] = len(d)
-            minv = d['v'].min()
-            maxv = d['v'].max()
+            minv = d["v"].min()
+            maxv = d["v"].max()
             if maxv > self.maxvalue:
                 self.maxvalue = maxv
             if minv < self.minvalue:
@@ -1785,32 +1840,34 @@ class bedGraphTrackII:
             pre_p = 0
             for i in range(len(d)):
                 # for each region
-                ln = d[i][0]-pre_p
-                sum_v += d[i][1]*ln
+                ln = d[i][0] - pre_p
+                sum_v += d[i][1] * ln
                 n_v += ln
                 pre_p = d[i][0]
             max_v = max(max(d["v"]), max_v)
             min_v = min(min(d["v"]), min_v)
-        mean_v = sum_v/n_v
+        mean_v = sum_v / n_v
         variance = 0.0
         for d in self.__data.values():
             for i in range(len(d)):
                 # for each region
-                tmp = d[i][1]-mean_v
-                ln = d[i][0]-pre_p
-                variance += tmp*tmp*ln
+                tmp = d[i][1] - mean_v
+                ln = d[i][0] - pre_p
+                variance += tmp * tmp * ln
                 pre_p = d[i][0]
 
-        variance /= float(n_v-1)
+        variance /= float(n_v - 1)
         std_v = sqrt(variance)
         return (sum_v, n_v, max_v, min_v, mean_v, std_v)
 
     @cython.ccall
-    def call_peaks(self,
-                   cutoff: cython.float = 1.0,
-                   min_length: cython.int = 200,
-                   max_gap: cython.int = 50,
-                   call_summits: bool = False):
+    def call_peaks(
+        self,
+        cutoff: cython.float = 1.0,
+        min_length: cython.int = 200,
+        max_gap: cython.int = 50,
+        call_summits: bool = False,
+    ):
         """This function try to find regions within which, scores
         are continuously higher than a given cutoff.
 
@@ -1826,12 +1883,12 @@ class bedGraphTrackII:
         peak_content: list
 
         chrs = self.get_chr_names()
-        peaks = PeakIO()                      # dictionary to save peaks
+        peaks = PeakIO()  # dictionary to save peaks
 
         for chrom in sorted(chrs):
-            peak_content = []           # to store points above cutoff
-            pos = self.__data[chrom]['p']
-            value = self.__data[chrom]['v']
+            peak_content = []  # to store points above cutoff
+            pos = self.__data[chrom]["p"]
+            value = self.__data[chrom]["v"]
 
             above_cutoff = value >= cutoff
             # scores where score is above cutoff
@@ -1850,74 +1907,85 @@ class bedGraphTrackII:
                 above_cutoff_startpos[0] = 0
 
             # first bit of region above cutoff
-            peak_content.append((above_cutoff_startpos[0], above_cutoff_endpos[0], above_cutoff_v[0]))
+            peak_content.append(
+                (above_cutoff_startpos[0], above_cutoff_endpos[0], above_cutoff_v[0])
+            )
             for i in range(1, above_cutoff_startpos.size):
                 if above_cutoff_startpos[i] - peak_content[-1][1] <= max_gap:
                     # append
-                    peak_content.append((above_cutoff_startpos[i], above_cutoff_endpos[i], above_cutoff_v[i]))
+                    peak_content.append(
+                        (
+                            above_cutoff_startpos[i],
+                            above_cutoff_endpos[i],
+                            above_cutoff_v[i],
+                        )
+                    )
                 else:
                     # close
-                    self.__close_peak(peak_content,
-                                      peaks,
-                                      min_length,
-                                      chrom)
-                    peak_content = [(above_cutoff_startpos[i], above_cutoff_endpos[i], above_cutoff_v[i]),]
+                    self.__close_peak(peak_content, peaks, min_length, chrom)
+                    peak_content = [
+                        (
+                            above_cutoff_startpos[i],
+                            above_cutoff_endpos[i],
+                            above_cutoff_v[i],
+                        ),
+                    ]
 
             # save the last peak
             if not peak_content:
                 continue
             else:
-                self.__close_peak(peak_content,
-                                  peaks,
-                                  min_length,
-                                  chrom)
+                self.__close_peak(peak_content, peaks, min_length, chrom)
 
         return peaks
 
     @cython.cfunc
-    def __close_peak(self,
-                     peak_content: list,
-                     peaks,
-                     min_length: cython.int,
-                     chrom: bytes) -> bool:
-        tsummit: list           # list for temporary summits
+    def __close_peak(
+        self, peak_content: list, peaks, min_length: cython.int, chrom: bytes
+    ) -> bool:
+        tsummit: list  # list for temporary summits
         peak_length: cython.int
         summit: cython.int
         tstart: cython.int
         tend: cython.int
         summit_value: cython.float
         tvalue: cython.float
-        peak_length = peak_content[-1][1]-peak_content[0][0]
+        peak_length = peak_content[-1][1] - peak_content[0][0]
         if peak_length >= min_length:  # if the peak is too small, reject it
             tsummit = []
             summit = 0
             summit_value = 0
-            for (tstart, tend, tvalue) in peak_content:
+            for tstart, tend, tvalue in peak_content:
                 if not summit_value or summit_value < tvalue:
-                    tsummit = [cython.cast(cython.int, (tend+tstart)/2),]
+                    tsummit = [
+                        cython.cast(cython.int, (tend + tstart) / 2),
+                    ]
                     summit_value = tvalue
                 elif summit_value == tvalue:
-                    tsummit.append(cython.cast(cython.int, (tend+tstart)/2))
-            summit = tsummit[cython.cast(cython.int, (len(tsummit)+1)/2)-1]
-            peaks.add(chrom,
-                      peak_content[0][0],
-                      peak_content[-1][1],
-                      summit=summit,
-                      peak_score=summit_value,
-                      pileup=0,
-                      pscore=0,
-                      fold_change=0,
-                      qscore=0
-                      )
+                    tsummit.append(cython.cast(cython.int, (tend + tstart) / 2))
+            summit = tsummit[cython.cast(cython.int, (len(tsummit) + 1) / 2) - 1]
+            peaks.add(
+                chrom,
+                peak_content[0][0],
+                peak_content[-1][1],
+                summit=summit,
+                peak_score=summit_value,
+                pileup=0,
+                pscore=0,
+                fold_change=0,
+                qscore=0,
+            )
             return True
 
     @cython.ccall
-    def call_broadpeaks(self,
-                        lvl1_cutoff: cython.float = 500,
-                        lvl2_cutoff: cython.float = 100,
-                        min_length: cython.int = 200,
-                        lvl1_max_gap: cython.int = 50,
-                        lvl2_max_gap: cython.int = 400):
+    def call_broadpeaks(
+        self,
+        lvl1_cutoff: cython.float = 500,
+        lvl2_cutoff: cython.float = 100,
+        min_length: cython.int = 200,
+        lvl1_max_gap: cython.int = 50,
+        lvl2_max_gap: cython.int = 400,
+    ):
         """This function try to find enriched regions within which,
         scores are continuously higher than a given cutoff for level
         1, and link them using the gap above level 2 cutoff with a
@@ -1938,20 +2006,28 @@ class bedGraphTrackII:
         j: cython.int
         chrs: set
         lvl1: PeakContent
-        lvl2: PeakContent   # PeakContent class object
+        lvl2: PeakContent  # PeakContent class object
         lvl1peakschrom: list
         lvl2peakschrom: list
 
-        assert lvl1_cutoff > lvl2_cutoff, "level 1 cutoff should be larger than level 2."
-        assert lvl1_max_gap < lvl2_max_gap, "level 2 maximum gap should be larger than level 1."
-        lvl1_peaks = self.call_peaks(cutoff=lvl1_cutoff,
-                                     min_length=min_length,
-                                     max_gap=lvl1_max_gap,
-                                     call_summits=False)
-        lvl2_peaks = self.call_peaks(cutoff=lvl2_cutoff,
-                                     min_length=min_length,
-                                     max_gap=lvl2_max_gap,
-                                     call_summits=False)
+        assert lvl1_cutoff > lvl2_cutoff, (
+            "level 1 cutoff should be larger than level 2."
+        )
+        assert lvl1_max_gap < lvl2_max_gap, (
+            "level 2 maximum gap should be larger than level 1."
+        )
+        lvl1_peaks = self.call_peaks(
+            cutoff=lvl1_cutoff,
+            min_length=min_length,
+            max_gap=lvl1_max_gap,
+            call_summits=False,
+        )
+        lvl2_peaks = self.call_peaks(
+            cutoff=lvl2_cutoff,
+            min_length=min_length,
+            max_gap=lvl2_max_gap,
+            call_summits=False,
+        )
         chrs = lvl1_peaks.get_chr_names()
         broadpeaks = BroadPeakIO()
         # use lvl2_peaks as linking regions between lvl1_peaks
@@ -1959,7 +2035,7 @@ class bedGraphTrackII:
             lvl1peakschrom = lvl1_peaks.get_data_from_chrom(chrom)
             lvl2peakschrom = lvl2_peaks.get_data_from_chrom(chrom)
             lvl1peakschrom_next = iter(lvl1peakschrom).__next__
-            tmppeakset = []             # to temporarily store lvl1 region inside a lvl2 region
+            tmppeakset = []  # to temporarily store lvl1 region inside a lvl2 region
             # our assumption is lvl1 regions should be included in lvl2 regions
             try:
                 lvl1 = lvl1peakschrom_next()
@@ -1967,34 +2043,30 @@ class bedGraphTrackII:
                     # for each lvl2 peak, find all lvl1 peaks inside
                     lvl2 = lvl2peakschrom[i]
                     while True:
-                        if lvl2["start"] <= lvl1["start"] and lvl1["end"] <= lvl2["end"]:
+                        if (
+                            lvl2["start"] <= lvl1["start"]
+                            and lvl1["end"] <= lvl2["end"]
+                        ):
                             tmppeakset.append(lvl1)
                             lvl1 = lvl1peakschrom_next()
                         else:
-                            self.__add_broadpeak(broadpeaks,
-                                                 chrom,
-                                                 lvl2,
-                                                 tmppeakset)
+                            self.__add_broadpeak(broadpeaks, chrom, lvl2, tmppeakset)
                             tmppeakset = []
                             break
             except StopIteration:
                 self.__add_broadpeak(broadpeaks, chrom, lvl2, tmppeakset)
                 tmppeakset = []
-                for j in range(i+1, len(lvl2peakschrom)):
-                    self.__add_broadpeak(broadpeaks,
-                                         chrom,
-                                         lvl2peakschrom[j],
-                                         tmppeakset)
+                for j in range(i + 1, len(lvl2peakschrom)):
+                    self.__add_broadpeak(
+                        broadpeaks, chrom, lvl2peakschrom[j], tmppeakset
+                    )
         return broadpeaks
 
     @cython.cfunc
-    def __add_broadpeak(self,
-                        bpeaks,
-                        chrom: bytes,
-                        lvl2peak: PeakContent,
-                        lvl1peakset: list):
-        """Internal function to create broad peak.
-        """
+    def __add_broadpeak(
+        self, bpeaks, chrom: bytes, lvl2peak: PeakContent, lvl1peakset: list
+    ):
+        """Internal function to create broad peak."""
         start: cython.int
         end: cython.int
         blockNum: cython.int
@@ -2012,49 +2084,57 @@ class bedGraphTrackII:
             # try:
             # will complement by adding 1bps start and end to this region
             # may change in the future if gappedPeak format was improved.
-            bpeaks.add(chrom, start, end,
-                       score=lvl2peak["score"],
-                       thickStart=(b"%d" % start),
-                       thickEnd=(b"%d" % end),
-                       blockNum=2,
-                       blockSizes=b"1,1",
-                       blockStarts=(b"0,%d" % (end-start-1)),
-                       pileup=lvl2peak["pileup"],
-                       pscore=lvl2peak["pscore"],
-                       fold_change=lvl2peak["fc"],
-                       qscore=lvl2peak["qscore"])
+            bpeaks.add(
+                chrom,
+                start,
+                end,
+                score=lvl2peak["score"],
+                thickStart=(b"%d" % start),
+                thickEnd=(b"%d" % end),
+                blockNum=2,
+                blockSizes=b"1,1",
+                blockStarts=(b"0,%d" % (end - start - 1)),
+                pileup=lvl2peak["pileup"],
+                pscore=lvl2peak["pscore"],
+                fold_change=lvl2peak["fc"],
+                qscore=lvl2peak["qscore"],
+            )
             return bpeaks
 
         thickStart = b"%d" % lvl1peakset[0]["start"]
         thickEnd = b"%d" % lvl1peakset[-1]["end"]
         blockNum = len(lvl1peakset)
         blockSizes = b",".join([b"%d" % x["length"] for x in lvl1peakset])
-        blockStarts = b",".join([b"%d" % (x["start"]-start) for x in lvl1peakset])
+        blockStarts = b",".join([b"%d" % (x["start"] - start) for x in lvl1peakset])
 
         if int(thickStart) != start:
             # add 1bp left block
             thickStart = b"%d" % start
             blockNum += 1
-            blockSizes = b"1,"+blockSizes
-            blockStarts = b"0,"+blockStarts
+            blockSizes = b"1," + blockSizes
+            blockStarts = b"0," + blockStarts
         if int(thickEnd) != end:
             # add 1bp right block
             thickEnd = b"%d" % end
             blockNum += 1
-            blockSizes = blockSizes+b",1"
-            blockStarts = blockStarts + b"," + (b"%d" % (end-start-1))
+            blockSizes = blockSizes + b",1"
+            blockStarts = blockStarts + b"," + (b"%d" % (end - start - 1))
 
-        bpeaks.add(chrom, start, end,
-                   score=lvl2peak["score"],
-                   thickStart=thickStart,
-                   thickEnd=thickEnd,
-                   blockNum=blockNum,
-                   blockSizes=blockSizes,
-                   blockStarts=blockStarts,
-                   pileup=lvl2peak["pileup"],
-                   pscore=lvl2peak["pscore"],
-                   fold_change=lvl2peak["fc"],
-                   qscore=lvl2peak["qscore"])
+        bpeaks.add(
+            chrom,
+            start,
+            end,
+            score=lvl2peak["score"],
+            thickStart=thickStart,
+            thickEnd=thickEnd,
+            blockNum=blockNum,
+            blockSizes=blockSizes,
+            blockStarts=blockStarts,
+            pileup=lvl2peak["pileup"],
+            pscore=lvl2peak["pscore"],
+            fold_change=lvl2peak["fc"],
+            qscore=lvl2peak["qscore"],
+        )
         return bpeaks
 
     @cython.ccall
@@ -2134,7 +2214,9 @@ class bedGraphTrackII:
                         # no more value chunk in bedGraph
                         break
                 else:
-                    raise Exception(f"no way here! prev position:{pre_p}; position:{p}; value:{v}; peak start:{peak_s}; peak end:{peak_e}")
+                    raise Exception(
+                        f"no way here! prev position:{pre_p}; position:{p}; value:{v}; peak start:{peak_s}; peak end:{peak_e}"
+                    )
 
             # save the last peak
             if peak_content:
@@ -2143,12 +2225,10 @@ class bedGraphTrackII:
 
     @cython.ccall
     def total(self) -> cython.int:
-        """Return the number of regions in this object.
-
-        """
+        """Return the number of regions in this object."""
         t: cython.int
         d: cnp.ndarray
-        
+
         t = 0
         for d in self.__data.values():
             t += len(d)
@@ -2820,8 +2900,9 @@ class bedGraphTrackII:
 
 
 @cython.cfunc
-def calculate_elbows(values: cnp.ndarray,
-                     threshold: cython.float = 0.01) -> cnp.ndarray:
+def calculate_elbows(
+    values: cnp.ndarray, threshold: cython.float = 0.01
+) -> cnp.ndarray:
     # although this function is supposed to find elbow pts for cutoff
     # analysis, however, in reality, it barely works...
     deltas: cnp.ndarray

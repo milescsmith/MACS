@@ -33,7 +33,7 @@ def run(options0):
     # debug = options.debug
     error = options.error
 
-    options.PE_MODE = options.format in ('BAMPE', 'BEDPE')
+    options.PE_MODE = options.format in ("BAMPE", "BEDPE")
 
     # 0 check output file
     if options.outputfile:
@@ -45,7 +45,7 @@ def run(options0):
     if options.PE_MODE:
         info("# read input file in Paired-end mode.")
         treat = load_frag_files_options(options)  # return PETrackI object
-        t0 = treat.total                          # total fragments
+        t0 = treat.total  # total fragments
         info("# total fragments/pairs in alignment file: %d" % (t0))
     else:
         info("read tag files...")
@@ -59,17 +59,19 @@ def run(options0):
 
     if options.number:
         if options.number > t0:
-            error(" Number you want is bigger than total number of tags in alignment file! Please specify a smaller number and try again!")
+            error(
+                " Number you want is bigger than total number of tags in alignment file! Please specify a smaller number and try again!"
+            )
             error(" %.2e > %.2e" % (options.number, t0))
             sys.exit(1)
         info(" Number of tags you want to keep: %.2e" % (options.number))
-        options.percentage = float(options.number)/t0*100
+        options.percentage = float(options.number) / t0 * 100
     info(" Percentage of tags you want to keep: %.2f%%" % (options.percentage))
 
     if options.seed >= 0:
         info(" Random seed has been set as: %d" % options.seed)
 
-    treat.sample_percent(options.percentage/100.0, options.seed)
+    treat.sample_percent(options.percentage / 100.0, options.seed)
 
     info(" tags after random sampling in alignment file: %d" % (treat.total))
 
@@ -79,12 +81,10 @@ def run(options0):
 
 
 def load_tag_files_options(options):
-    """From the options, load alignment tags.
-
-    """
+    """From the options, load alignment tags."""
     options.info("# read treatment tags...")
     tp = options.parser(options.ifile[0], buffer_size=options.buffer_size)
-    if not options.tsize:           # override tsize if user specified --tsize
+    if not options.tsize:  # override tsize if user specified --tsize
         ttsize = tp.tsize()
         options.tsize = ttsize
     treat = tp.build_fwtrack()
@@ -102,9 +102,7 @@ def load_tag_files_options(options):
 
 
 def load_frag_files_options(options):
-    """From the options, load treatment fragments and control fragments (if available).
-
-    """
+    """From the options, load treatment fragments and control fragments (if available)."""
     options.info("# read treatment fragments...")
 
     tp = options.parser(options.ifile[0], buffer_size=options.buffer_size)

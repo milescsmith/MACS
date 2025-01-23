@@ -32,19 +32,19 @@ from cython.cimports.cpython import bool
 
 __BAMDNACODE__ = b"=ACMGRSVTWYHKDBN"
 __CIGARCODE__ = "MIDNSHP=X"
-__DNACOMPLEMENT__ = b'\x00\x01\x02\x03\x04\x05\x06\x07\x08\t\n\x0b\x0c\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f !"#$%&\'()*+,-./0123456789:;<=>?@TBGDEFCHIJKLMNOPQRSAUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~\x7f\x80\x81\x82\x83\x84\x85\x86\x87\x88\x89\x8a\x8b\x8c\x8d\x8e\x8f\x90\x91\x92\x93\x94\x95\x96\x97\x98\x99\x9a\x9b\x9c\x9d\x9e\x9f\xa0\xa1\xa2\xa3\xa4\xa5\xa6\xa7\xa8\xa9\xaa\xab\xac\xad\xae\xaf\xb0\xb1\xb2\xb3\xb4\xb5\xb6\xb7\xb8\xb9\xba\xbb\xbc\xbd\xbe\xbf\xc0\xc1\xc2\xc3\xc4\xc5\xc6\xc7\xc8\xc9\xca\xcb\xcc\xcd\xce\xcf\xd0\xd1\xd2\xd3\xd4\xd5\xd6\xd7\xd8\xd9\xda\xdb\xdc\xdd\xde\xdf\xe0\xe1\xe2\xe3\xe4\xe5\xe6\xe7\xe8\xe9\xea\xeb\xec\xed\xee\xef\xf0\xf1\xf2\xf3\xf4\xf5\xf6\xf7\xf8\xf9\xfa\xfb\xfc\xfd\xfe\xff' # A trans table to convert A to T, C to G, G to C, and T to A.
+__DNACOMPLEMENT__ = b"\x00\x01\x02\x03\x04\x05\x06\x07\x08\t\n\x0b\x0c\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f !\"#$%&'()*+,-./0123456789:;<=>?@TBGDEFCHIJKLMNOPQRSAUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~\x7f\x80\x81\x82\x83\x84\x85\x86\x87\x88\x89\x8a\x8b\x8c\x8d\x8e\x8f\x90\x91\x92\x93\x94\x95\x96\x97\x98\x99\x9a\x9b\x9c\x9d\x9e\x9f\xa0\xa1\xa2\xa3\xa4\xa5\xa6\xa7\xa8\xa9\xaa\xab\xac\xad\xae\xaf\xb0\xb1\xb2\xb3\xb4\xb5\xb6\xb7\xb8\xb9\xba\xbb\xbc\xbd\xbe\xbf\xc0\xc1\xc2\xc3\xc4\xc5\xc6\xc7\xc8\xc9\xca\xcb\xcc\xcd\xce\xcf\xd0\xd1\xd2\xd3\xd4\xd5\xd6\xd7\xd8\xd9\xda\xdb\xdc\xdd\xde\xdf\xe0\xe1\xe2\xe3\xe4\xe5\xe6\xe7\xe8\xe9\xea\xeb\xec\xed\xee\xef\xf0\xf1\xf2\xf3\xf4\xf5\xf6\xf7\xf8\xf9\xfa\xfb\xfc\xfd\xfe\xff"  # A trans table to convert A to T, C to G, G to C, and T to A.
 
 # -- CIGAR CODE --
-#OP BAM  Description
-#M  0    alignment match (can be a sequence match or mismatch) insertion to the reference
-#I  1    insertion to the reference
-#D  2    deletion from the reference
-#N  3    skipped region from the reference
-#S  4    soft clipping (clipped sequences present in SEQ)
-#H  5    hard clipping (clipped sequences NOT present in SEQ)
-#P  6    padding (silent deletion from padded reference)
-#=  7    sequence match
-#X  8    sequence mismatch
+# OP BAM  Description
+# M  0    alignment match (can be a sequence match or mismatch) insertion to the reference
+# I  1    insertion to the reference
+# D  2    deletion from the reference
+# N  3    skipped region from the reference
+# S  4    soft clipping (clipped sequences present in SEQ)
+# H  5    hard clipping (clipped sequences NOT present in SEQ)
+# P  6    padding (silent deletion from padded reference)
+# =  7    sequence match
+# X  8    sequence mismatch
 # -- -- -- -- -- --
 
 # ------------------------------------
@@ -66,23 +66,26 @@ class ReadAlignment:
     strand: cython.int
     binaryseq: bytes
     binaryqual: bytes
-    l: cython.int                   # length of read
-    cigar: tuple             # each item contains op_l|op
+    l: cython.int  # length of read
+    cigar: tuple  # each item contains op_l|op
     MD: bytes
     # number of edits; higher the number, more differences with reference
     n_edits: cython.int
-    SEQ: bytes               # sequence of read regarding to + strand
-    QUAL: bytes              # quality of read regarding to + strand
+    SEQ: bytes  # sequence of read regarding to + strand
+    QUAL: bytes  # quality of read regarding to + strand
 
-    def __init__(self,
-                 readname: bytes,
-                 chrom: bytes,
-                 lpos: cython.int, rpos: cython.int,
-                 strand: cython.int,
-                 binaryseq: bytes,
-                 binaryqual: bytes,
-                 cigar: tuple,
-                 MD: bytes):
+    def __init__(
+        self,
+        readname: bytes,
+        chrom: bytes,
+        lpos: cython.int,
+        rpos: cython.int,
+        strand: cython.int,
+        binaryseq: bytes,
+        binaryqual: bytes,
+        cigar: tuple,
+        MD: bytes,
+    ):
         self.readname = readname
         self.chrom = chrom
         self.lpos = lpos
@@ -98,9 +101,7 @@ class ReadAlignment:
 
     @cython.cfunc
     def get_n_edits(self) -> cython.int:
-        """The number is from self.cigar and self.MD.
-
-        """
+        """The number is from self.cigar and self.MD."""
         n_edits: cython.int
         i: cython.int
         cigar_op: cython.int
@@ -108,14 +109,14 @@ class ReadAlignment:
         c: cython.char
 
         n_edits = 0
-        for i in self.cigar:    # only count insertion or softclip
+        for i in self.cigar:  # only count insertion or softclip
             cigar_op = i & 15
             cigar_op_l = i >> 4
-            if cigar_op in [1, 4]:    # count Insertion or Softclip
+            if cigar_op in [1, 4]:  # count Insertion or Softclip
                 n_edits += cigar_op_l
 
         for c in self.MD:
-            if (c > 64 and c < 91):  # either deletion in query or mismatch
+            if c > 64 and c < 91:  # either deletion in query or mismatch
                 n_edits += 1
         return n_edits
 
@@ -127,7 +128,7 @@ class ReadAlignment:
         else:
             s = "+"
         return f"{c}\t{self.lpos}\t{self.rpos}\t{n}\t{self.l}\t{s}"
-    
+
     def __getitem__(self, keyname):
         if keyname == "readname":
             return self.readname
@@ -159,14 +160,38 @@ class ReadAlignment:
             raise KeyError("No such key", keyname)
 
     def __getstate__(self):
-        return (self.readname, self.chrom, self.lpos, self.rpos, self.strand,
-                self.binaryseq, self.binaryqual, self.l, self.cigar,
-                self.MD, self.n_edits, self.SEQ, self.QUAL)
+        return (
+            self.readname,
+            self.chrom,
+            self.lpos,
+            self.rpos,
+            self.strand,
+            self.binaryseq,
+            self.binaryqual,
+            self.l,
+            self.cigar,
+            self.MD,
+            self.n_edits,
+            self.SEQ,
+            self.QUAL,
+        )
 
     def __setstate__(self, state):
-        (self.readname, self.chrom, self.lpos, self.rpos, self.strand,
-         self.binaryseq, self.binaryqual, self.l, self.cigar, self.MD,
-         self.n_edits, self.SEQ, self.QUAL) = state
+        (
+            self.readname,
+            self.chrom,
+            self.lpos,
+            self.rpos,
+            self.strand,
+            self.binaryseq,
+            self.binaryqual,
+            self.l,
+            self.cigar,
+            self.MD,
+            self.n_edits,
+            self.SEQ,
+            self.QUAL,
+        ) = state
 
     @cython.cfunc
     def __get_SEQ_QUAL(self) -> tuple:
@@ -204,7 +229,9 @@ class ReadAlignment:
         if seq[-1] == b"=":
             # trim the last '=' if it exists
             seq = seq[:-1]
-        assert len(seq) == len(qual), Exception("Lengths of seq and qual are not consistent!")
+        assert len(seq) == len(qual), Exception(
+            "Lengths of seq and qual are not consistent!"
+        )
 
         # Example on how to get original SEQ and QUAL:
         # if self.strand:
@@ -217,9 +244,7 @@ class ReadAlignment:
 
     @cython.ccall
     def get_FASTQ(self) -> bytes:
-        """Get FASTQ format text.
-
-        """
+        """Get FASTQ format text."""
         seq: bytes
         qual: bytearray
 
@@ -244,8 +269,7 @@ class ReadAlignment:
 
     @cython.ccall
     def get_REFSEQ(self) -> bytearray:
-        """Fetch reference sequence, using self.MD and self.cigar
-        """
+        """Fetch reference sequence, using self.MD and self.cigar"""
         c: cython.char
         seq: bytearray
         i: cython.int
@@ -253,7 +277,7 @@ class ReadAlignment:
         cigar_op_l: cython.int
         MD_op: bytearray
         ind: cython.int
-        flag_del: bool       # flag for deletion event in query
+        flag_del: bool  # flag for deletion event in query
 
         # we start with read seq then make modifications
         seq = bytearray(self.SEQ)
@@ -276,8 +300,8 @@ class ReadAlignment:
                 # M = X alignment match (match or mismatch) do nothing
                 # and move ind
                 ind += cigar_op_l
-            elif cigar_op in [1, 4]:    # Remove for Insertion or Softclip
-                seq[ind: ind + cigar_op_l] = b''
+            elif cigar_op in [1, 4]:  # Remove for Insertion or Softclip
+                seq[ind : ind + cigar_op_l] = b""
 
         # now the seq should be at the same length as rpos-lpos
 
@@ -286,7 +310,7 @@ class ReadAlignment:
 
         # let ind be the index in SEQ again, from 0
         ind = 0
-        MD_op = bytearray(b'')
+        MD_op = bytearray(b"")
         flag_del = False
         for c in self.MD:
             if c < 58 and c > 47:
@@ -301,9 +325,11 @@ class ReadAlignment:
                 seq[ind] = c
                 ind += 1
                 # reset MD_op
-                MD_op = bytearray(b'')
+                MD_op = bytearray(b"")
             elif (c > 64 and c < 91) and flag_del:
-                seq[ind:ind] = [c,]
+                seq[ind:ind] = [
+                    c,
+                ]
                 ind += 1
             elif c == 94:
                 # means Deletion in query. Now, insert a sequnce into
@@ -311,7 +337,7 @@ class ReadAlignment:
                 flag_del = True
                 ind += int(MD_op)
                 # reset MD_op
-                MD_op = bytearray(b'')
+                MD_op = bytearray(b"")
             else:
                 raise Exception("Don't understand this operator in MD: %c" % c)
             # print(seq.decode())
@@ -320,20 +346,20 @@ class ReadAlignment:
 
     @cython.ccall
     def get_base_by_ref_pos(self, ref_pos: cython.long):
-        """Get base by ref position.
-
-        """
+        """Get base by ref position."""
         relative_pos: cython.int
         p: cython.int
 
-        assert self.lpos <= ref_pos and self.rpos > ref_pos, Exception("Given position out of alignment location")
+        assert self.lpos <= ref_pos and self.rpos > ref_pos, Exception(
+            "Given position out of alignment location"
+        )
         relative_pos = ref_pos - self.lpos
         p = self.relative_ref_pos_to_relative_query_pos(relative_pos)
 
-        if p == -1:             # located in a region deleted in query
+        if p == -1:  # located in a region deleted in query
             return None
         else:
-            return __BAMDNACODE__[(self.binaryseq[p//2] >> ((1-p % 2)*4)) & 15]
+            return __BAMDNACODE__[(self.binaryseq[p // 2] >> ((1 - p % 2) * 4)) & 15]
 
     @cython.ccall
     def get_bq_by_ref_pos(self, ref_pos: cython.long):
@@ -345,11 +371,13 @@ class ReadAlignment:
         relative_pos: cython.int
         p: cython.int
 
-        assert self.lpos <= ref_pos and self.rpos > ref_pos, Exception("Given position out of alignment location")
+        assert self.lpos <= ref_pos and self.rpos > ref_pos, Exception(
+            "Given position out of alignment location"
+        )
         relative_pos = ref_pos - self.lpos
         p = self.relative_ref_pos_to_relative_query_pos(relative_pos)
 
-        if p == -1:             # located in a region deleted in query
+        if p == -1:  # located in a region deleted in query
             return None
         else:
             return self.binaryqual[p]
@@ -365,19 +393,22 @@ class ReadAlignment:
         relative_pos: cython.int
         p: cython.int
 
-        assert self.lpos <= ref_pos and self.rpos > ref_pos, Exception("Given position out of alignment location")
+        assert self.lpos <= ref_pos and self.rpos > ref_pos, Exception(
+            "Given position out of alignment location"
+        )
         relative_pos = ref_pos - self.lpos
         p = self.relative_ref_pos_to_relative_query_pos(relative_pos)
 
-        if p == -1:             # located in a region deleted in query
+        if p == -1:  # located in a region deleted in query
             return None
         else:
-            return (__BAMDNACODE__[(self.binaryseq[p//2] >> ((1-p % 2)*4)) & 15],
-                    self.binaryqual[p])
+            return (
+                __BAMDNACODE__[(self.binaryseq[p // 2] >> ((1 - p % 2) * 4)) & 15],
+                self.binaryqual[p],
+            )
 
     @cython.ccall
-    def get_variant_bq_by_ref_pos(self,
-                                  ref_pos: cython.long) -> tuple:
+    def get_variant_bq_by_ref_pos(self, ref_pos: cython.long) -> tuple:
         """Get any variants (different with reference) and base
         quality by ref position.
 
@@ -409,9 +440,11 @@ class ReadAlignment:
         seq_array: bytearray
         bq_array: bytearray
 
-        assert self.lpos <= ref_pos and self.rpos > ref_pos, Exception("Given position out of alignment location")
+        assert self.lpos <= ref_pos and self.rpos > ref_pos, Exception(
+            "Given position out of alignment location"
+        )
 
-        res = ref_pos - self.lpos          # residue
+        res = ref_pos - self.lpos  # residue
         p = 0
         refseq = self.get_REFSEQ()
         # p_refseq = refseq[res]
@@ -427,26 +460,34 @@ class ReadAlignment:
         # =  7    sequence match
         # X  8    sequence mismatch
 
-        seq_array = bytearray(b'')
-        bq_array = bytearray(b'')
+        seq_array = bytearray(b"")
+        bq_array = bytearray(b"")
 
         for m in range(len(self.cigar)):
             i = self.cigar[m]
             op = i & 15
             op_l = i >> 4
-            if op in [0, 7, 8]:         # M = X alignment match (match or mismatch)
+            if op in [0, 7, 8]:  # M = X alignment match (match or mismatch)
                 if res < op_l - 1:
                     # in the range of a CIGAR operator
                     p += res
                     # find the position, now get the ref
                     pos = p
-                    seq_array.append(__BAMDNACODE__[(self.binaryseq[p//2] >> ((1-p % 2)*4)) & 15])
+                    seq_array.append(
+                        __BAMDNACODE__[
+                            (self.binaryseq[p // 2] >> ((1 - p % 2) * 4)) & 15
+                        ]
+                    )
                     bq_array.append(self.binaryqual[p])
                     break
                 elif res == op_l - 1:
                     p += res
                     pos = p
-                    seq_array.append(__BAMDNACODE__[(self.binaryseq[p//2] >> ((1-p % 2)*4)) & 15])
+                    seq_array.append(
+                        __BAMDNACODE__[
+                            (self.binaryseq[p // 2] >> ((1 - p % 2) * 4)) & 15
+                        ]
+                    )
                     bq_array.append(self.binaryqual[p])
                     # now add any insertion later on
                     # get next cigar
@@ -458,7 +499,11 @@ class ReadAlignment:
                     if op == 1:  # insertion
                         for n in range(op_l):
                             p += 1
-                            seq_array.append(__BAMDNACODE__[(self.binaryseq[p//2] >> ((1-p % 2)*4)) & 15])
+                            seq_array.append(
+                                __BAMDNACODE__[
+                                    (self.binaryseq[p // 2] >> ((1 - p % 2) * 4)) & 15
+                                ]
+                            )
                             bq_array.append(self.binaryqual[p])
                         # prself: cython.int.SEQ, seq_array
                     break
@@ -472,13 +517,13 @@ class ReadAlignment:
                     # position located in a region in reference that
                     # not exists in query
                     pos = p
-                    seq_array.append(b'*')
-                    bq_array.append(93)   # assign 93 for deletion
+                    seq_array.append(b"*")
+                    bq_array.append(93)  # assign 93 for deletion
                     break
                 else:
                     # go to the next cigar code
                     res -= op_l
-            elif op == 1:      # Insertion
+            elif op == 1:  # Insertion
                 p += op_l
                 # if res == 0:    # no residue left, so return a chunk of inserted sequence
                 #     print "shouldn't run this code"
@@ -493,7 +538,9 @@ class ReadAlignment:
                 #     break
                 # else:
                 #     p += op_l
-            elif op == 4:      # Softclip. If it's Softclip, we'd better not return the extra seq
+            elif (
+                op == 4
+            ):  # Softclip. If it's Softclip, we'd better not return the extra seq
                 p += op_l
 
         if pos == 0 or pos == self.l - 1:
@@ -505,10 +552,10 @@ class ReadAlignment:
         # raise Exception("Not expected to see this")
 
     @cython.cfunc
-    def relative_ref_pos_to_relative_query_pos(self,
-                                               relative_ref_pos: cython.long) -> cython.int:
-        """Convert relative pos on ref to pos on query.
-        """
+    def relative_ref_pos_to_relative_query_pos(
+        self, relative_ref_pos: cython.long
+    ) -> cython.int:
+        """Convert relative pos on ref to pos on query."""
         p: cython.int
         res: cython.int
         op: cython.int
@@ -535,6 +582,6 @@ class ReadAlignment:
                     return -1
                 else:
                     res -= op_l
-            elif op in [1, 4]:       # I
+            elif op in [1, 4]:  # I
                 p += op_l
         return p

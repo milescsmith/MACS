@@ -8,6 +8,7 @@ This code is free software; you can redistribute it and/or modify it
 under the terms of the BSD License (see the file LICENSE included with
 the distribution).
 """
+
 # ------------------------------------
 # python modules
 # ------------------------------------
@@ -28,8 +29,9 @@ info = logger.info
 
 @cython.inline
 @cython.cfunc
-def get_weighted_density(x: cython.int, m: cython.float, v:
-                         cython.float, w: cython.float) -> cython.float:
+def get_weighted_density(
+    x: cython.int, m: cython.float, v: cython.float, w: cython.float
+) -> cython.float:
     """Description:
 
     parameters:
@@ -51,8 +53,9 @@ def get_weighted_density(x: cython.int, m: cython.float, v:
 
 
 @cython.ccall
-def generate_weight_mapping(fraglen_list: list, means: list, stddevs:
-                            list, min_frag_p: cython.float = 0.001) -> list:
+def generate_weight_mapping(
+    fraglen_list: list, means: list, stddevs: list, min_frag_p: cython.float = 0.001
+) -> list:
     """Generate weights for each fragment length in short, mono, di,
     and tri-signals track
 
@@ -95,13 +98,20 @@ def generate_weight_mapping(fraglen_list: list, means: list, stddevs:
         p_d = pnorm2(float(fl), m_d, v_d)
         p_t = pnorm2(float(fl), m_t, v_t)
         s = p_s + p_m + p_d + p_t
-        if p_s < min_frag_p and p_m < min_frag_p and p_d < min_frag_p and p_t < min_frag_p:
+        if (
+            p_s < min_frag_p
+            and p_m < min_frag_p
+            and p_d < min_frag_p
+            and p_t < min_frag_p
+        ):
             # we exclude the fragment which can't be assigned to
             # short, mono, di-nuc, and tri-nuc (likelihood <
             # min_frag_p, default:0.001) Normally this fragment is too
             # large. We exclude these fragment by setting all weights
             # to zero.
-            debug(f"The fragment length {fl} can't be assigned to either distribution so will be excluded!")
+            debug(
+                f"The fragment length {fl} can't be assigned to either distribution so will be excluded!"
+            )
             ret_mapping[0][fl] = 0
             ret_mapping[1][fl] = 0
             ret_mapping[2][fl] = 0
@@ -133,7 +143,7 @@ def generate_digested_signals(petrack, weight_mapping: list) -> list:
 
     ret_digested_signals = petrack.pileup_bdg_hmmr(weight_mapping)
     ret_bedgraphs = []
-    for i in range(4):          # yes I hardcoded 4!
+    for i in range(4):  # yes I hardcoded 4!
         certain_signals = ret_digested_signals[i]
         bdg = bedGraphTrackI()
         for chrom in sorted(certain_signals.keys()):
@@ -143,8 +153,9 @@ def generate_digested_signals(petrack, weight_mapping: list) -> list:
 
 
 @cython.ccall
-def extract_signals_from_regions(signals: list, regions, binsize:
-                                 cython.int = 10, hmm_type: str = 'gaussian') -> list:
+def extract_signals_from_regions(
+    signals: list, regions, binsize: cython.int = 10, hmm_type: str = "gaussian"
+) -> list:
     # we will take regions in peaks, create a bedGraphTrackI with
     # binned regions in peaks, then let them overlap with signals to
     # create a list (4) of value arrays.
@@ -163,12 +174,12 @@ def extract_signals_from_regions(signals: list, regions, binsize:
     ret_training_bins: list
 
     regionsbdg = _make_bdg_of_bins_from_regions(regions, binsize)
-    debug('#      extract_signals_from_regions: regionsbdg completed')
+    debug("#      extract_signals_from_regions: regionsbdg completed")
     # now, let's overlap
     extracted_positions = []
     extracted_data = []
     extracted_len = []
-    for signaltrack in signals: # four signal tracks
+    for signaltrack in signals:  # four signal tracks
         # signaltrack is bedGraphTrackI object
         [positions, values, lengths] = signaltrack.extract_value_hmmr(regionsbdg)
         extracted_positions.append(positions)
@@ -177,7 +188,7 @@ def extract_signals_from_regions(signals: list, regions, binsize:
     positions = []
     values = []
     lengths = []
-    debug('#      extract_signals_from_regions: extracted positions, data, len')
+    debug("#      extract_signals_from_regions: extracted positions, data, len")
     ret_training_bins = []
     ret_training_data = []
     ret_training_lengths = []
@@ -194,33 +205,43 @@ def extract_signals_from_regions(signals: list, regions, binsize:
         for i in range(nn):
             ret_training_bins.append(extracted_positions[0][i])
             ret_training_data.append(
-                [max(0.0001, extracted_data[0][i]),
-                 max(0.0001, extracted_data[1][i]),
-                 max(0.0001, extracted_data[2][i]),
-                 max(0.0001, extracted_data[3][i])])
+                [
+                    max(0.0001, extracted_data[0][i]),
+                    max(0.0001, extracted_data[1][i]),
+                    max(0.0001, extracted_data[2][i]),
+                    max(0.0001, extracted_data[3][i]),
+                ]
+            )
             c = extracted_len[0][i]
             if counter != 0 and c != prev_c:
                 ret_training_lengths.append(counter)
                 counter = 0
             prev_c = c
             counter += 1
-        debug('#      extract_signals_from_regions: ret_training bins, data, lengths - gaussian')
+        debug(
+            "#      extract_signals_from_regions: ret_training bins, data, lengths - gaussian"
+        )
     # poisson can only take int values as input
     if hmm_type == "poisson":
         for i in range(nn):
             ret_training_bins.append(extracted_positions[0][i])
             ret_training_data.append(
-                [int(max(0.0001, extracted_data[0][i])),
-                 int(max(0.0001, extracted_data[1][i])),
-                 int(max(0.0001, extracted_data[2][i])),
-                 int(max(0.0001, extracted_data[3][i]))])
+                [
+                    int(max(0.0001, extracted_data[0][i])),
+                    int(max(0.0001, extracted_data[1][i])),
+                    int(max(0.0001, extracted_data[2][i])),
+                    int(max(0.0001, extracted_data[3][i])),
+                ]
+            )
             c = extracted_len[0][i]
             if counter != 0 and c != prev_c:
                 ret_training_lengths.append(counter)
                 counter = 0
             prev_c = c
             counter += 1
-        debug('#      extract_signals_from_regions: ret_training bins, data, lengths - poisson')
+        debug(
+            "#      extract_signals_from_regions: ret_training bins, data, lengths - poisson"
+        )
     # last region
     ret_training_lengths.append(counter)
     assert sum(ret_training_lengths) == len(ret_training_data)
@@ -258,15 +279,17 @@ def _make_bdg_of_bins_from_regions(regions, binsize: cython.int):
             s = ps[i][0]
             e = ps[i][1]
             # make bins, no need to be too accurate...
-            s = s//binsize*binsize
-            e = e//binsize*binsize
+            s = s // binsize * binsize
+            e = e // binsize * binsize
             # tmp_n = int((e - s)/binsize)
             for r in range(s, e, binsize):
                 tmp_s = r
                 tmp_e = r + binsize
                 if tmp_s > tmp_p:
                     regionsbdg.add_loc_wo_merge(chrom, tmp_p, tmp_s, 0)  # the gap
-                regionsbdg.add_loc_wo_merge(chrom, tmp_s, tmp_e, mark_bin)  # the value we put in the bin bedgraph is the number of bins in this region
+                regionsbdg.add_loc_wo_merge(
+                    chrom, tmp_s, tmp_e, mark_bin
+                )  # the value we put in the bin bedgraph is the number of bins in this region
                 n += 1
                 tmp_p = tmp_e
             # end of region, we change the mark_bin

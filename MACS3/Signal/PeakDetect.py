@@ -8,6 +8,7 @@ This code is free software; you can redistribute it and/or modify it
 under the terms of the BSD License (see the file LICENSE included with
 the distribution).
 """
+
 # ------------------------------------
 # Python modules
 # ------------------------------------
@@ -23,7 +24,7 @@ from MACS3.Signal.CallPeakUnit import CallerFromAlignments
 @cython.cfunc
 def subpeak_letters(i: cython.short) -> bytes:
     if i < 26:
-        return chr(97+i).encode()
+        return chr(97 + i).encode()
     else:
         return subpeak_letters(i // 26) + chr(97 + (i % 26)).encode()
 
@@ -36,18 +37,19 @@ class PeakDetect:
     >>> pd = PeakDetect(treat=treatdata, control=controldata, pvalue=pvalue_cutoff, d=100, gsize=3000000000)
     >>> pd.call_peaks()
     """
-    def __init__(self,
-                 opt=None,
-                 treat=None,
-                 control=None,
-                 d=None,
-                 maxgap=None,
-                 minlen=None,
-                 slocal=None,
-                 llocal=None):
-        """Initialize the PeakDetect object.
 
-        """
+    def __init__(
+        self,
+        opt=None,
+        treat=None,
+        control=None,
+        d=None,
+        maxgap=None,
+        minlen=None,
+        slocal=None,
+        llocal=None,
+    ):
+        """Initialize the PeakDetect object."""
         self.opt = opt
         self.info = opt.info
         self.debug = opt.debug
@@ -65,8 +67,8 @@ class PeakDetect:
         # self.femin = opt.femin
         # self.festep = opt.festep
 
-        self.log_pvalue = opt.log_pvalue    # -log10pvalue
-        self.log_qvalue = opt.log_qvalue    # -log10qvalue
+        self.log_pvalue = opt.log_pvalue  # -log10pvalue
+        self.log_qvalue = opt.log_qvalue  # -log10qvalue
         if d is not None:
             self.d = d
         else:
@@ -97,7 +99,7 @@ class PeakDetect:
         else:
             self.lregion = opt.largelocal
 
-        if (self.nolambda):
+        if self.nolambda:
             self.info("#3 !!!! DYNAMIC LAMBDA IS DISABLED !!!!")
         # self.diag = opt.diag
         # self.save_score = opt.store_score
@@ -110,12 +112,12 @@ class PeakDetect:
         Scan the whole genome for peaks. RESULTS WILL BE SAVED IN
         self.final_peaks and self.final_negative_peaks.
         """
-        if self.control:                # w/ control
+        if self.control:  # w/ control
             # if self.opt.broad:
             #    (self.peaks,self.broadpeaks) = self.__call_peaks_w_control()
             # else:
             self.peaks = self.__call_peaks_w_control()
-        else:                           # w/o control
+        else:  # w/o control
             # if self.opt.broad:
             #    (self.peaks,self.broadpeaks) = self.__call_peaks_wo_control()
             # else:
@@ -164,13 +166,13 @@ class PeakDetect:
             control_total = self.control.total * 2
             treat_sum = self.treat.length
             control_sum = control_total * self.treat.average_template_length
-            self.ratio_treat2control = float(treat_sum)/control_sum
+            self.ratio_treat2control = float(treat_sum) / control_sum
         else:
             d = self.d
             control_total = self.control.total
             treat_sum = self.treat.total * self.d
             control_sum = self.control.total * self.d
-            self.ratio_treat2control = float(treat_sum)/control_sum
+            self.ratio_treat2control = float(treat_sum) / control_sum
 
         if self.opt.ratio != 1.0:
             self.ratio_treat2control = self.opt.ratio
@@ -179,7 +181,7 @@ class PeakDetect:
             # if MACS decides to scale treatment to control data
             # because treatment is bigger
             lambda_bg = float(control_sum) / self.gsize
-            treat_scale = 1/self.ratio_treat2control
+            treat_scale = 1 / self.ratio_treat2control
         else:
             # if MACS decides to scale control to treatment because
             # control sample is bigger
@@ -188,13 +190,19 @@ class PeakDetect:
 
         # prepare d_s for control data
         if self.sregion:
-            assert self.d <= self.sregion, f"{self.sregion:} can't be smaller than {self.d:}!"
+            assert self.d <= self.sregion, (
+                f"{self.sregion:} can't be smaller than {self.d:}!"
+            )
         if self.lregion:
-            assert self.d <= self.lregion, f"{self.lregion:} can't be smaller than {self.d:}!"
-            assert self.sregion <= self.lregion, f"{self.lregion:} can't be smaller than {self.sregion:}!"
+            assert self.d <= self.lregion, (
+                f"{self.lregion:} can't be smaller than {self.d:}!"
+            )
+            assert self.sregion <= self.lregion, (
+                f"{self.lregion:} can't be smaller than {self.sregion:}!"
+            )
 
         # Now prepare a list of extension sizes
-        ctrl_d_s = [self.d]   # note, d doesn't make sense in PE mode.
+        ctrl_d_s = [self.d]  # note, d doesn't make sense in PE mode.
         # And a list of scaling factors for control
         ctrl_scale_s = []
 
@@ -211,9 +219,9 @@ class PeakDetect:
             ctrl_d_s.append(self.sregion)
             if not self.opt.tocontrol:
                 # if user want to scale everything to ChIP data
-                tmp_v = float(self.d)/self.sregion*self.ratio_treat2control
+                tmp_v = float(self.d) / self.sregion * self.ratio_treat2control
             else:
-                tmp_v = float(self.d)/self.sregion
+                tmp_v = float(self.d) / self.sregion
             ctrl_scale_s.append(tmp_v)
 
         # llocal size local
@@ -221,9 +229,9 @@ class PeakDetect:
             ctrl_d_s.append(self.lregion)
             if not self.opt.tocontrol:
                 # if user want to scale everything to ChIP data
-                tmp_v = float(self.d)/self.lregion*self.ratio_treat2control
+                tmp_v = float(self.d) / self.lregion * self.ratio_treat2control
             else:
-                tmp_v = float(self.d)/self.lregion
+                tmp_v = float(self.d) / self.lregion
             ctrl_scale_s.append(tmp_v)
 
         # if self.PE_MODE:        # first d/scale are useless in PE mode
@@ -235,18 +243,22 @@ class PeakDetect:
             ctrl_d_s = []
             ctrl_scale_s = []
 
-        scorecalculator = CallerFromAlignments(self.treat, self.control,
-                                               d=d, ctrl_d_s=ctrl_d_s,
-                                               treat_scaling_factor=treat_scale,
-                                               ctrl_scaling_factor_s=ctrl_scale_s,
-                                               end_shift=self.end_shift,
-                                               lambda_bg=lambda_bg,
-                                               save_bedGraph=self.opt.store_bdg,
-                                               bedGraph_filename_prefix=self.opt.name,
-                                               bedGraph_treat_filename=self.opt.bdg_treat,
-                                               bedGraph_control_filename=self.opt.bdg_control,
-                                               save_SPMR=self.opt.do_SPMR,
-                                               cutoff_analysis_filename=self.opt.cutoff_analysis_file )
+        scorecalculator = CallerFromAlignments(
+            self.treat,
+            self.control,
+            d=d,
+            ctrl_d_s=ctrl_d_s,
+            treat_scaling_factor=treat_scale,
+            ctrl_scaling_factor_s=ctrl_scale_s,
+            end_shift=self.end_shift,
+            lambda_bg=lambda_bg,
+            save_bedGraph=self.opt.store_bdg,
+            bedGraph_filename_prefix=self.opt.name,
+            bedGraph_treat_filename=self.opt.bdg_treat,
+            bedGraph_control_filename=self.opt.bdg_control,
+            save_SPMR=self.opt.do_SPMR,
+            cutoff_analysis_filename=self.opt.cutoff_analysis_file,
+        )
 
         if self.opt.trackline:
             scorecalculator.enable_trackline()
@@ -258,39 +270,76 @@ class PeakDetect:
 
         if self.log_pvalue is not None:
             if self.opt.broad:
-                self.info("#3 Call broad peaks with given level1 -log10pvalue cutoff and level2: %.5f, %.5f..." %
-                          (self.log_pvalue, self.opt.log_broadcutoff))
-                peaks = scorecalculator.call_broadpeaks(['p',],
-                                                        lvl1_cutoff_s=[self.log_pvalue,],
-                                                        lvl2_cutoff_s=[self.opt.log_broadcutoff,],
-                                                        min_length=self.minlen,
-                                                        lvl1_max_gap=self.maxgap,
-                                                        lvl2_max_gap=self.maxgap*4,
-                                                        cutoff_analysis=self.opt.cutoff_analysis)
+                self.info(
+                    "#3 Call broad peaks with given level1 -log10pvalue cutoff and level2: %.5f, %.5f..."
+                    % (self.log_pvalue, self.opt.log_broadcutoff)
+                )
+                peaks = scorecalculator.call_broadpeaks(
+                    [
+                        "p",
+                    ],
+                    lvl1_cutoff_s=[
+                        self.log_pvalue,
+                    ],
+                    lvl2_cutoff_s=[
+                        self.opt.log_broadcutoff,
+                    ],
+                    min_length=self.minlen,
+                    lvl1_max_gap=self.maxgap,
+                    lvl2_max_gap=self.maxgap * 4,
+                    cutoff_analysis=self.opt.cutoff_analysis,
+                )
             else:
-                self.info("#3 Call peaks with given -log10pvalue cutoff: %.5f ..." % self.log_pvalue)
-                peaks = scorecalculator.call_peaks(['p',], [self.log_pvalue,],
-                                                   min_length=self.minlen,
-                                                   max_gap=self.maxgap,
-                                                   call_summits=call_summits,
-                                                   cutoff_analysis=self.opt.cutoff_analysis)
+                self.info(
+                    "#3 Call peaks with given -log10pvalue cutoff: %.5f ..."
+                    % self.log_pvalue
+                )
+                peaks = scorecalculator.call_peaks(
+                    [
+                        "p",
+                    ],
+                    [
+                        self.log_pvalue,
+                    ],
+                    min_length=self.minlen,
+                    max_gap=self.maxgap,
+                    call_summits=call_summits,
+                    cutoff_analysis=self.opt.cutoff_analysis,
+                )
         elif self.log_qvalue is not None:
             if self.opt.broad:
-                self.info("#3 Call broad peaks with given level1 -log10qvalue cutoff and level2: %f, %f..." %
-                          (self.log_qvalue, self.opt.log_broadcutoff))
-                peaks = scorecalculator.call_broadpeaks(['q',],
-                                                        lvl1_cutoff_s=[self.log_qvalue,],
-                                                        lvl2_cutoff_s=[self.opt.log_broadcutoff,],
-                                                        min_length=self.minlen,
-                                                        lvl1_max_gap=self.maxgap,
-                                                        lvl2_max_gap=self.maxgap*4,
-                                                        cutoff_analysis=self.opt.cutoff_analysis)
+                self.info(
+                    "#3 Call broad peaks with given level1 -log10qvalue cutoff and level2: %f, %f..."
+                    % (self.log_qvalue, self.opt.log_broadcutoff)
+                )
+                peaks = scorecalculator.call_broadpeaks(
+                    [
+                        "q",
+                    ],
+                    lvl1_cutoff_s=[
+                        self.log_qvalue,
+                    ],
+                    lvl2_cutoff_s=[
+                        self.opt.log_broadcutoff,
+                    ],
+                    min_length=self.minlen,
+                    lvl1_max_gap=self.maxgap,
+                    lvl2_max_gap=self.maxgap * 4,
+                    cutoff_analysis=self.opt.cutoff_analysis,
+                )
             else:
-                peaks = scorecalculator.call_peaks(['q',], [self.log_qvalue,],
-                                                   min_length=self.minlen,
-                                                   max_gap=self.maxgap,
-                                                   call_summits=call_summits,
-                                                   cutoff_analysis=self.opt.cutoff_analysis)
+                peaks = scorecalculator.call_peaks(
+                    [
+                        "q",
+                    ],
+                    [
+                        self.log_qvalue,
+                    ],
+                    min_length=self.minlen,
+                    max_gap=self.maxgap,
+                    call_summits=call_summits,
+                    cutoff_analysis=self.opt.cutoff_analysis,
+                )
         scorecalculator.destroy()
         return peaks
 
@@ -332,7 +381,7 @@ class PeakDetect:
 
         # global lambda
         if self.PE_MODE:
-        # this an estimator, we should maybe test it for accuracy?
+            # this an estimator, we should maybe test it for accuracy?
             lambda_bg = treat_length / self.gsize
         else:
             lambda_bg = float(d) * treat_total / self.gsize
@@ -343,27 +392,36 @@ class PeakDetect:
 
         if not self.nolambda:
             if self.PE_MODE:
-                ctrl_scale_s = [float(treat_length) / (self.lregion*treat_total*2),]
+                ctrl_scale_s = [
+                    float(treat_length) / (self.lregion * treat_total * 2),
+                ]
             else:
-                ctrl_scale_s = [float(self.d) / self.lregion,]
-            ctrl_d_s = [self.lregion,]
+                ctrl_scale_s = [
+                    float(self.d) / self.lregion,
+                ]
+            ctrl_d_s = [
+                self.lregion,
+            ]
         else:
             ctrl_scale_s = []
             ctrl_d_s = []
 
-        scorecalculator = CallerFromAlignments(self.treat, None,
-                                               d=d,
-                                               ctrl_d_s=ctrl_d_s,
-                                               treat_scaling_factor=treat_scale,
-                                               ctrl_scaling_factor_s=ctrl_scale_s,
-                                               end_shift=self.end_shift,
-                                               lambda_bg=lambda_bg,
-                                               save_bedGraph=self.opt.store_bdg,
-                                               bedGraph_filename_prefix=self.opt.name,
-                                               bedGraph_treat_filename=self.opt.bdg_treat,
-                                               bedGraph_control_filename=self.opt.bdg_control,
-                                               save_SPMR=self.opt.do_SPMR,
-                                               cutoff_analysis_filename=self.opt.cutoff_analysis_file)
+        scorecalculator = CallerFromAlignments(
+            self.treat,
+            None,
+            d=d,
+            ctrl_d_s=ctrl_d_s,
+            treat_scaling_factor=treat_scale,
+            ctrl_scaling_factor_s=ctrl_scale_s,
+            end_shift=self.end_shift,
+            lambda_bg=lambda_bg,
+            save_bedGraph=self.opt.store_bdg,
+            bedGraph_filename_prefix=self.opt.name,
+            bedGraph_treat_filename=self.opt.bdg_treat,
+            bedGraph_control_filename=self.opt.bdg_control,
+            save_SPMR=self.opt.do_SPMR,
+            cutoff_analysis_filename=self.opt.cutoff_analysis_file,
+        )
 
         if self.opt.trackline:
             scorecalculator.enable_trackline()
@@ -375,38 +433,75 @@ class PeakDetect:
 
         if self.log_pvalue is not None:
             if self.opt.broad:
-                self.info("#3 Call broad peaks with given level1 -log10pvalue cutoff and level2: %.5f, %.5f..." %
-                          (self.log_pvalue, self.opt.log_broadcutoff))
-                peaks = scorecalculator.call_broadpeaks(['p',],
-                                                        lvl1_cutoff_s=[self.log_pvalue,],
-                                                        lvl2_cutoff_s=[self.opt.log_broadcutoff,],
-                                                        min_length=self.minlen,
-                                                        lvl1_max_gap=self.maxgap,
-                                                        lvl2_max_gap=self.maxgap*4,
-                                                        cutoff_analysis=self.opt.cutoff_analysis)
+                self.info(
+                    "#3 Call broad peaks with given level1 -log10pvalue cutoff and level2: %.5f, %.5f..."
+                    % (self.log_pvalue, self.opt.log_broadcutoff)
+                )
+                peaks = scorecalculator.call_broadpeaks(
+                    [
+                        "p",
+                    ],
+                    lvl1_cutoff_s=[
+                        self.log_pvalue,
+                    ],
+                    lvl2_cutoff_s=[
+                        self.opt.log_broadcutoff,
+                    ],
+                    min_length=self.minlen,
+                    lvl1_max_gap=self.maxgap,
+                    lvl2_max_gap=self.maxgap * 4,
+                    cutoff_analysis=self.opt.cutoff_analysis,
+                )
             else:
-                self.info("#3 Call peaks with given -log10pvalue cutoff: %.5f ..." % self.log_pvalue)
-                peaks = scorecalculator.call_peaks(['p',], [self.log_pvalue,],
-                                                   min_length=self.minlen,
-                                                   max_gap=self.maxgap,
-                                                   call_summits=call_summits,
-                                                   cutoff_analysis=self.opt.cutoff_analysis)
+                self.info(
+                    "#3 Call peaks with given -log10pvalue cutoff: %.5f ..."
+                    % self.log_pvalue
+                )
+                peaks = scorecalculator.call_peaks(
+                    [
+                        "p",
+                    ],
+                    [
+                        self.log_pvalue,
+                    ],
+                    min_length=self.minlen,
+                    max_gap=self.maxgap,
+                    call_summits=call_summits,
+                    cutoff_analysis=self.opt.cutoff_analysis,
+                )
         elif self.log_qvalue is not None:
             if self.opt.broad:
-                self.info("#3 Call broad peaks with given level1 -log10qvalue cutoff and level2: %f, %f..." %
-                          (self.log_qvalue, self.opt.log_broadcutoff))
-                peaks = scorecalculator.call_broadpeaks(['q',],
-                                                        lvl1_cutoff_s=[self.log_qvalue,],
-                                                        lvl2_cutoff_s=[self.opt.log_broadcutoff,],
-                                                        min_length=self.minlen,
-                                                        lvl1_max_gap=self.maxgap,
-                                                        lvl2_max_gap=self.maxgap*4,
-                                                        cutoff_analysis=self.opt.cutoff_analysis)
+                self.info(
+                    "#3 Call broad peaks with given level1 -log10qvalue cutoff and level2: %f, %f..."
+                    % (self.log_qvalue, self.opt.log_broadcutoff)
+                )
+                peaks = scorecalculator.call_broadpeaks(
+                    [
+                        "q",
+                    ],
+                    lvl1_cutoff_s=[
+                        self.log_qvalue,
+                    ],
+                    lvl2_cutoff_s=[
+                        self.opt.log_broadcutoff,
+                    ],
+                    min_length=self.minlen,
+                    lvl1_max_gap=self.maxgap,
+                    lvl2_max_gap=self.maxgap * 4,
+                    cutoff_analysis=self.opt.cutoff_analysis,
+                )
             else:
-                peaks = scorecalculator.call_peaks(['q',], [self.log_qvalue,],
-                                                   min_length=self.minlen,
-                                                   max_gap=self.maxgap,
-                                                   call_summits=call_summits,
-                                                   cutoff_analysis=self.opt.cutoff_analysis)
+                peaks = scorecalculator.call_peaks(
+                    [
+                        "q",
+                    ],
+                    [
+                        self.log_qvalue,
+                    ],
+                    min_length=self.minlen,
+                    max_gap=self.maxgap,
+                    call_summits=call_summits,
+                    cutoff_analysis=self.opt.cutoff_analysis,
+                )
         scorecalculator.destroy()
         return peaks

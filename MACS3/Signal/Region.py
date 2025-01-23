@@ -46,10 +46,10 @@ __doc__ = "Region class"
 
 @cython.cclass
 class Regions:
-    """For plain region of chrom, start and end
-    """
-    regions = cython.declare(dict, visibility='public')
-    total = cython.declare(cython.int, visibility='public')
+    """For plain region of chrom, start and end"""
+
+    regions = cython.declare(dict, visibility="public")
+    total = cython.declare(cython.int, visibility="public")
     __sorted: bool
     __merged: bool
 
@@ -66,11 +66,11 @@ class Regions:
     def pop(self, n: cython.int):
         # when called, pop the first n regions in Regions class. Self
         # will be modified.
-        clist: list             # for chromosomes
+        clist: list  # for chromosomes
         tmp_l: cython.int
         chrom: bytes
-        n_taken: cython.int     # remember the number of regions prepared
-        ret: object             # returned Regions
+        n_taken: cython.int  # remember the number of regions prepared
+        ret: object  # returned Regions
 
         if self.total == 0:
             raise Exception("None left")
@@ -114,7 +114,7 @@ class Regions:
             self.regions[chrom] = []
             for i in range(len(ps)):
                 p = ps[i]
-                self.regions[chrom].append((p['start'], p['end']))
+                self.regions[chrom].append((p["start"], p["end"]))
                 self.total += 1
         self.sort()
 
@@ -123,7 +123,9 @@ class Regions:
         if self.regions.has_key(chrom):
             self.regions[chrom].append((start, end))
         else:
-            self.regions[chrom] = [(start, end),]
+            self.regions[chrom] = [
+                (start, end),
+            ]
         self.total += 1
         self.__sorted = False
         self.__merged = False
@@ -141,8 +143,7 @@ class Regions:
 
     @cython.ccall
     def total_length(self) -> cython.long:
-        """ Return the total length of the Regions object.
-        """
+        """Return the total length of the Regions object."""
         chrom: bytes
         ps: list
         i: cython.int
@@ -164,8 +165,7 @@ class Regions:
 
     @cython.ccall
     def expand(self, flanking: int):
-        """ Expand regions to both directions with 'flanking' bps.
-        """
+        """Expand regions to both directions with 'flanking' bps."""
         chrom: bytes
         ps: list
         i: cython.int
@@ -240,8 +240,7 @@ class Regions:
         for i in range(len(chrs)):
             chrom = chrs[i]
             for region in self.regions[chrom]:
-                fhd.write("%s\t%d\t%d\n" % (chrom.decode(),
-                                            region[0], region[1]))
+                fhd.write("%s\t%d\t%d\n" % (chrom.decode(), region[0], region[1]))
 
     def __str__(self):
         i: cython.int
@@ -255,8 +254,7 @@ class Regions:
         for i in range(len(chrs)):
             chrom = chrs[i]
             for region in self.regions[chrom]:
-                ret += "%s\t%d\t%d\n" % (chrom.decode(),
-                                         region[0], region[1])
+                ret += "%s\t%d\t%d\n" % (chrom.decode(), region[0], region[1])
         return ret
 
     # cpdef object randomly_pick (self, int n, int seed = 12345):
@@ -283,7 +281,7 @@ class Regions:
 
     @cython.ccall
     def intersect(self, regions_object2):
-        """ Get the only intersecting regions comparing with
+        """Get the only intersecting regions comparing with
         regions_object2, another Regions object. Then return a new
         Regions object.
 
@@ -322,15 +320,15 @@ class Regions:
                 self.total += len(ret_regions[k])
                 continue
             ret_regions[k] = []
-            n_rl1 = len(regions1[k])    # number of remaining elements in regions1[k]
-            n_rl2 = len(regions2[k])    # number of remaining elements in regions2[k]
+            n_rl1 = len(regions1[k])  # number of remaining elements in regions1[k]
+            n_rl2 = len(regions2[k])  # number of remaining elements in regions2[k]
             rl1_k = iter(regions1[k]).__next__
             rl2_k = iter(regions2[k]).__next__
             r1 = rl1_k()
             n_rl1 -= 1
             r2 = rl2_k()
             n_rl2 -= 1
-            while (True):
+            while True:
                 # we do this until there is no r1 or r2 left.
                 if r2[0] < r1[1] and r1[0] < r2[1]:
                     # We found an overlap, now get the intersecting
@@ -361,7 +359,7 @@ class Regions:
 
     @cython.ccall
     def exclude(self, regions_object2):
-        """ Remove overlapping regions in regions_object2, another Regions
+        """Remove overlapping regions in regions_object2, another Regions
         object.
 
         """
@@ -404,7 +402,7 @@ class Regions:
             n_rl1 -= 1
             r2 = rl2_k()
             n_rl2 -= 1
-            while (True):
+            while True:
                 # we do this until there is no r1 or r2 left.
                 if r2[0] < r1[1] and r1[0] < r2[1]:
                     # since we found an overlap, r1 will be skipped/excluded
@@ -438,7 +436,7 @@ class Regions:
                         # no more r2 left
                         break
             if n_rl1 >= 0:
-                ret_regions[k].extend(regions1[k][-n_rl1-1:])
+                ret_regions[k].extend(regions1[k][-n_rl1 - 1 :])
             self.total += len(ret_regions[k])
 
         self.regions = ret_regions

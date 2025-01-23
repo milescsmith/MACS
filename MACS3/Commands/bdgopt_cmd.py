@@ -58,7 +58,14 @@ def run(options):
         elif options.method.lower() == "min":
             btrack.apply_func(lambda x: x if x < extraparam else extraparam)
 
-    ofile = BedGraphIO.bedGraphIO(os.path.join(options.outdir, options.ofile), data=btrack)
+    ofile = BedGraphIO.bedGraphIO(
+        os.path.join(options.outdir, options.ofile), data=btrack
+    )
     info("Write bedGraph of modified scores...")
-    ofile.write_bedGraph(name="%s_modified_scores" % (options.method.upper()), description="Scores calculated by %s" % (options.method.upper()))
-    info("Finished '%s'! Please check '%s'!" % (options.method, ofile.bedGraph_filename))
+    ofile.write_bedGraph(
+        name="%s_modified_scores" % (options.method.upper()),
+        description="Scores calculated by %s" % (options.method.upper()),
+    )
+    info(
+        "Finished '%s'! Please check '%s'!" % (options.method, ofile.bedGraph_filename)
+    )

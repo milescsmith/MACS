@@ -100,16 +100,16 @@ def check_names(treat, control, error_stream):
     cchrnames = set(control.get_chr_names())
     commonnames = tchrnames.intersection(cchrnames)
     if len(commonnames) == 0:
-        error_stream("No common chromosome names can be found from treatment and control! Check your input files! MACS will quit...")
+        error_stream(
+            "No common chromosome names can be found from treatment and control! Check your input files! MACS will quit..."
+        )
         error_stream("Chromosome names in treatment: %s" % ",".join(sorted(tchrnames)))
         error_stream("Chromosome names in control: %s" % ",".join(sorted(cchrnames)))
         sys.exit()
 
 
 def run(args):
-    """The Main function/pipeline for MACS
-
-    """
+    """The Main function/pipeline for MACS"""
     options = opt_validate_callvar(args)
 
     info = options.info
@@ -137,7 +137,7 @@ def run(args):
 
     peakio = open(peakbedfile)
     peaks = PeakIO()
-    #i = 0
+    # i = 0
     for t_peak in peakio:
         fs = t_peak.rstrip().split()
         # i += 1
@@ -149,7 +149,12 @@ def run(args):
     tbam = BAMaccessor(tfile)
     if cfile:
         cbam = BAMaccessor(cfile)
-        assert tbam.get_chromosomes()[0] in cbam.get_chromosomes() or cbam.get_chromosomes()[0] in tbam.get_chromosomes(), Exception("It seems Treatment and Control BAM use different naming for chromosomes! Check headers of both files.")
+        assert (
+            tbam.get_chromosomes()[0] in cbam.get_chromosomes()
+            or cbam.get_chromosomes()[0] in tbam.get_chromosomes()
+        ), Exception(
+            "It seems Treatment and Control BAM use different naming for chromosomes! Check headers of both files."
+        )
         # assert tbam.get_chromosomes() == cbam.get_chromosomes(), Exception("Treatment and Control BAM files have different orders of sorted chromosomes! Please check BAM Headers and re-sort BAM files.")
     else:
         cbam = None
@@ -158,11 +163,56 @@ def run(args):
 
     # prepare and write header of output file (.vcf)
     ovcf = open(options.ofile, "w")
-    tmpcmdstr = " --fermi " + fermi + " --fermi-overlap "+str(fermiMinOverlap)
-    ovcf.write(VCFHEADER % (datetime.date.today().strftime("%Y%m%d"), MACS_VERSION, " ".join(sys.argv[1:] + ["-Q", str(minQ), "-D", str(maxDuplicate), "--max-ar", str(max_allowed_ar), "--top2alleles-mratio", str(top2allelesminr), "--top2allele-count", str(min_altallele_count), "-g", str(min_heter_GQ), "-G", str(min_homo_GQ), tmpcmdstr])) + "\n")
-    for (chrom, chrlength) in tbam.get_rlengths().items():
-        ovcf.write("##contig=<ID=%s,length=%d,assembly=NA>\n" % (chrom.decode(), chrlength))
-    ovcf.write("\t".join(("#CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO", "FORMAT", "SAMPLE")) + "\n")
+    tmpcmdstr = " --fermi " + fermi + " --fermi-overlap " + str(fermiMinOverlap)
+    ovcf.write(
+        VCFHEADER
+        % (
+            datetime.date.today().strftime("%Y%m%d"),
+            MACS_VERSION,
+            " ".join(
+                sys.argv[1:]
+                + [
+                    "-Q",
+                    str(minQ),
+                    "-D",
+                    str(maxDuplicate),
+                    "--max-ar",
+                    str(max_allowed_ar),
+                    "--top2alleles-mratio",
+                    str(top2allelesminr),
+                    "--top2allele-count",
+                    str(min_altallele_count),
+                    "-g",
+                    str(min_heter_GQ),
+                    "-G",
+                    str(min_homo_GQ),
+                    tmpcmdstr,
+                ]
+            ),
+        )
+        + "\n"
+    )
+    for chrom, chrlength in tbam.get_rlengths().items():
+        ovcf.write(
+            "##contig=<ID=%s,length=%d,assembly=NA>\n" % (chrom.decode(), chrlength)
+        )
+    ovcf.write(
+        "\t".join(
+            (
+                "#CHROM",
+                "POS",
+                "ID",
+                "REF",
+                "ALT",
+                "QUAL",
+                "FILTER",
+                "INFO",
+                "FORMAT",
+                "SAMPLE",
+            )
+        )
+        + "\n"
+    )
 
     # to get time
     # t_total = 0
@@ -172,7 +222,7 @@ def run(args):
     # t_call_lnL = 0
     # t_call_variants = 0
     # t_call_GT = 0
-    #t_call_to_vcf = 0
+    # t_call_to_vcf = 0
     # t_total_0 = time()
 
     for chrom in sorted(tbam.get_chromosomes()):
@@ -190,12 +240,24 @@ def run(args):
             # t0 = time()
             try:
                 if cbam:
-                    ra_collection = RACollection(chrom, peak,
-                                                 tbam.get_reads_in_region(chrom, peak["start"], peak["end"], maxDuplicate=maxDuplicate),
-                                                 cbam.get_reads_in_region(chrom, peak["start"], peak["end"], maxDuplicate=maxDuplicate))
+                    ra_collection = RACollection(
+                        chrom,
+                        peak,
+                        tbam.get_reads_in_region(
+                            chrom, peak["start"], peak["end"], maxDuplicate=maxDuplicate
+                        ),
+                        cbam.get_reads_in_region(
+                            chrom, peak["start"], peak["end"], maxDuplicate=maxDuplicate
+                        ),
+                    )
                 else:
-                    ra_collection = RACollection(chrom, peak,
-                                                 tbam.get_reads_in_region(chrom, peak["start"], peak["end"], maxDuplicate=maxDuplicate))
+                    ra_collection = RACollection(
+                        chrom,
+                        peak,
+                        tbam.get_reads_in_region(
+                            chrom, peak["start"], peak["end"], maxDuplicate=maxDuplicate
+                        ),
+                    )
             except Exception:
                 info("No reads found in this peak. Skipped")
                 # while there is no reads in peak region, simply skip it.
@@ -219,22 +281,37 @@ def run(args):
 
                 # -- now make multi processes
                 # divide right-left into NP parts
-                window_size = ceil((ra_collection["right"] - ra_collection["left"]) / NP)
+                window_size = ceil(
+                    (ra_collection["right"] - ra_collection["left"]) / NP
+                )
 
                 P = mp.Pool(NP)
                 # this partial function will only be used in multiprocessing
-                p_call_variants_at_range = partial(call_variants_at_range, s=s, collection=ra_collection, top2allelesminr=top2allelesminr, max_allowed_ar=max_allowed_ar, min_altallele_count=min_altallele_count, min_homo_GQ=min_homo_GQ, min_heter_GQ=min_heter_GQ, minQ=minQ)
+                p_call_variants_at_range = partial(
+                    call_variants_at_range,
+                    s=s,
+                    collection=ra_collection,
+                    top2allelesminr=top2allelesminr,
+                    max_allowed_ar=max_allowed_ar,
+                    min_altallele_count=min_altallele_count,
+                    min_homo_GQ=min_homo_GQ,
+                    min_heter_GQ=min_heter_GQ,
+                    minQ=minQ,
+                )
 
                 ranges = []
                 for i in range(NP):
                     l_d = i * window_size + ra_collection["left"]
-                    r_d = min((i + 1) * window_size + ra_collection["left"], ra_collection["right"])
+                    r_d = min(
+                        (i + 1) * window_size + ra_collection["left"],
+                        ra_collection["right"],
+                    )
                     ranges.append((l_d, r_d))
 
                 mapresults = P.map_async(p_call_variants_at_range, ranges)
                 P.close()
                 P.join()
-                results = mapresults.get(timeout=window_size*300)
+                results = mapresults.get(timeout=window_size * 300)
                 for i in range(NP):
                     for result in results[i]:
                         peak_variants.add_variant(result[0], result[1])
@@ -242,15 +319,22 @@ def run(args):
                 # t_call_variants += time() - t_call_variants_0
 
             # Next, check if we should do local assembly
-            if (fermi == "auto" and (peak_variants.has_indel() or peak_variants.has_refer_biased_01())) or fermi == "on":
-                #print( peak_variants.has_indel() )
-                #print( peak_variants.has_refer_biased_01() )
+            if (
+                fermi == "auto"
+                and (peak_variants.has_indel() or peak_variants.has_refer_biased_01())
+            ) or fermi == "on":
+                # print( peak_variants.has_indel() )
+                # print( peak_variants.has_refer_biased_01() )
 
                 # invoke fermi to assemble local sequence and filter out those can not be mapped to unitigs.
                 info(" Try to call variants w/ fermi-lite assembly")
-                unitig_collection = ra_collection.build_unitig_collection(fermiMinOverlap)
+                unitig_collection = ra_collection.build_unitig_collection(
+                    fermiMinOverlap
+                )
                 if unitig_collection == -1:
-                    info(" Too many mismatches found while assembling the sequence, we will skip this region entirely!")
+                    info(
+                        " Too many mismatches found while assembling the sequence, we will skip this region entirely!"
+                    )
                     continue
                 elif unitig_collection == 0:
                     info("  Failed to assemble unitigs, fall back to previous results")
@@ -276,18 +360,24 @@ def run(args):
             # revisit all refer_biased_01 now. We do not use
             # multiprocessing here for simplicity since there won't be
             # too many in a peak region.
-            if (fermi == "auto" and (not peak_variants.has_indel()) and peak_variants.has_refer_biased_01()):
+            if (
+                fermi == "auto"
+                and (not peak_variants.has_indel())
+                and peak_variants.has_refer_biased_01()
+            ):
                 pos_tobe_revisit = peak_variants.get_refer_biased_01s()
                 for i in pos_tobe_revisit:
-                    ref_nt = chr(s[i-ra_collection["left"]]).encode()
-                    if ref_nt == b'N':
+                    ref_nt = chr(s[i - ra_collection["left"]]).encode()
+                    if ref_nt == b"N":
                         peak_variants.remove_variant(i)
                         continue
                     PRI = unitig_collection.get_PosReadsInfo_ref_pos(i, ref_nt, Q=minQ)
                     if PRI.raw_read_depth(opt="T") == 0:  # skip if coverage is 0
                         peak_variants.remove_variant(i)
                         continue
-                    PRI.update_top_alleles(top2allelesminr, min_altallele_count, max_allowed_ar)
+                    PRI.update_top_alleles(
+                        top2allelesminr, min_altallele_count, max_allowed_ar
+                    )
                     PRI.call_GT(max_allowed_ar)
                     PRI.apply_GQ_cutoff(min_homo_GQ, min_heter_GQ)
                     if not PRI.filterflag():
@@ -300,25 +390,42 @@ def run(args):
                     continue
 
             # in this case, we call variants at every locations in the peak based on local assembly.
-            if (fermi == "on" or (fermi == "auto" and peak_variants.has_indel())):
-                peak_variants = PeakVariants(chrom.decode(), peak["start"], peak["end"], s)  # reset
+            if fermi == "on" or (fermi == "auto" and peak_variants.has_indel()):
+                peak_variants = PeakVariants(
+                    chrom.decode(), peak["start"], peak["end"], s
+                )  # reset
 
                 # --- make multi processes
                 # divide right-left into NP parts
-                window_size = ceil((ra_collection["right"] - ra_collection["left"]) / NP)
+                window_size = ceil(
+                    (ra_collection["right"] - ra_collection["left"]) / NP
+                )
                 P = mp.Pool(NP)
                 # this partial function will only be used in multiprocessing
-                p_call_variants_at_range = partial(call_variants_at_range, s=s, collection=unitig_collection, top2allelesminr=top2allelesminr, max_allowed_ar=max_allowed_ar, min_altallele_count=min_altallele_count, min_homo_GQ=min_homo_GQ, min_heter_GQ=min_heter_GQ, minQ=minQ)
+                p_call_variants_at_range = partial(
+                    call_variants_at_range,
+                    s=s,
+                    collection=unitig_collection,
+                    top2allelesminr=top2allelesminr,
+                    max_allowed_ar=max_allowed_ar,
+                    min_altallele_count=min_altallele_count,
+                    min_homo_GQ=min_homo_GQ,
+                    min_heter_GQ=min_heter_GQ,
+                    minQ=minQ,
+                )
                 ranges = []
                 for i in range(NP):
                     l_d = i * window_size + ra_collection["left"]
-                    r_d = min((i + 1) * window_size + ra_collection["left"], ra_collection["right"])
+                    r_d = min(
+                        (i + 1) * window_size + ra_collection["left"],
+                        ra_collection["right"],
+                    )
                     ranges.append((l_d, r_d))
 
                 mapresults = P.map_async(p_call_variants_at_range, ranges)
                 P.close()
                 P.join()
-                results = mapresults.get(timeout=window_size*300)
+                results = mapresults.get(timeout=window_size * 300)
                 for i in range(NP):
                     for result in results[i]:
                         peak_variants.add_variant(result[0], result[1])
@@ -330,11 +437,21 @@ def run(args):
     return
 
 
-def call_variants_at_range(lr, s, collection, top2allelesminr, max_allowed_ar, min_altallele_count, min_homo_GQ, min_heter_GQ, minQ):
+def call_variants_at_range(
+    lr,
+    s,
+    collection,
+    top2allelesminr,
+    max_allowed_ar,
+    min_altallele_count,
+    min_homo_GQ,
+    min_heter_GQ,
+    minQ,
+):
     result = []
     for i in range(lr[0], lr[1]):
-        ref_nt = chr(s[i-collection["left"]]).encode()
-        if ref_nt == b'N':
+        ref_nt = chr(s[i - collection["left"]]).encode()
+        if ref_nt == b"N":
             continue
 
         PRI = collection.get_PosReadsInfo_ref_pos(i, ref_nt, Q=minQ)
@@ -343,7 +460,7 @@ def call_variants_at_range(lr, s, collection, top2allelesminr, max_allowed_ar, m
 
         PRI.update_top_alleles(top2allelesminr, min_altallele_count, max_allowed_ar)
         if not PRI.filterflag():
-            #PRI.update_top_alleles( top2allelesminr )
+            # PRI.update_top_alleles( top2allelesminr )
             PRI.call_GT(max_allowed_ar)
             PRI.apply_GQ_cutoff(min_homo_GQ, min_heter_GQ)
         if not PRI.filterflag():

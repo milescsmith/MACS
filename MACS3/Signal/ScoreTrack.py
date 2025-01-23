@@ -33,8 +33,7 @@ from cykhash import PyObjectMap, Float32to32Map
 # ------------------------------------
 # C lib
 # ------------------------------------
-from cython.cimports.libc.math import (log10,
-                                       log)
+from cython.cimports.libc.math import log10, log
 
 # ------------------------------------
 # constants
@@ -63,8 +62,7 @@ pscore_dict = PyObjectMap()
 
 
 @cython.cfunc
-def get_pscore(observed: cython.int,
-               expectation: cython.float) -> cython.float:
+def get_pscore(observed: cython.int, expectation: cython.float) -> cython.float:
     """Get p-value score from Poisson test. First check existing
     table, if failed, call poisson_cdf function, then store the result
     in table.
@@ -75,10 +73,7 @@ def get_pscore(observed: cython.int,
     try:
         return pscore_dict[(observed, expectation)]
     except KeyError:
-        score = -1 * poisson_cdf(observed,
-                                 expectation,
-                                 False,
-                                 True)
+        score = -1 * poisson_cdf(observed, expectation, False, True)
         pscore_dict[(observed, expectation)] = score
         return score
 
@@ -87,8 +82,7 @@ asym_logLR_dict = PyObjectMap()
 
 
 @cython.cfunc
-def logLR_asym(x: cython.float,
-               y: cython.float) -> cython.float:
+def logLR_asym(x: cython.float, y: cython.float) -> cython.float:
     """Calculate log10 Likelihood between H1 (enriched) and H0 (
     chromatin bias). Set minus sign for depletion.
 
@@ -101,9 +95,9 @@ def logLR_asym(x: cython.float,
         return asym_logLR_dict[(x, y)]
     else:
         if x > y:
-            s = (x*(log(x)-log(y))+y-x)*LOG10_E
+            s = (x * (log(x) - log(y)) + y - x) * LOG10_E
         elif x < y:
-            s = (x*(-log(x)+log(y))-y+x)*LOG10_E
+            s = (x * (-log(x) + log(y)) - y + x) * LOG10_E
         else:
             s = 0
         asym_logLR_dict[(x, y)] = s
@@ -127,9 +121,9 @@ def logLR_sym(x: cython.float, y: cython.float) -> cython.float:
         return sym_logLR_dict[(x, y)]
     else:
         if x > y:
-            s = (x*(log(x)-log(y))+y-x)*LOG10_E
+            s = (x * (log(x) - log(y)) + y - x) * LOG10_E
         elif y > x:
-            s = (y*(log(x)-log(y))+y-x)*LOG10_E
+            s = (y * (log(x) - log(y)) + y - x) * LOG10_E
         else:
             s = 0
         sym_logLR_dict[(x, y)] = s
@@ -139,16 +133,15 @@ def logLR_sym(x: cython.float, y: cython.float) -> cython.float:
 @cython.inline
 @cython.cfunc
 def get_logFE(x: cython.float, y: cython.float) -> cython.float:
-    """ return 100* log10 fold enrichment with +1 pseudocount.
-    """
-    return log10(x/y)
+    """return 100* log10 fold enrichment with +1 pseudocount."""
+    return log10(x / y)
 
 
 @cython.cfunc
 def get_subtraction(x: cython.float, y: cython.float) -> cython.float:
-    """ return subtraction.
-    """
+    """return subtraction."""
     return x - y
+
 
 # ------------------------------------
 # Classes
@@ -162,6 +155,7 @@ class ScoreTrackII:
 
     It also contains scoring methods and call_peak functions.
     """
+
     # dictionary for data of each chromosome
     data: dict
     # length of data array of each chromosome
@@ -183,10 +177,12 @@ class ScoreTrackII:
     # save pvalue<->length dictionary
     pvalue_stat: dict
 
-    def __init__(self,
-                 treat_depth: cython.float,
-                 ctrl_depth: cython.float,
-                 pseudocount: cython.float = 1.0):
+    def __init__(
+        self,
+        treat_depth: cython.float,
+        ctrl_depth: cython.float,
+        pseudocount: cython.float = 1.0,
+    ):
         """Initialize.
 
         treat_depth and ctrl_depth are effective depth in million:
@@ -241,35 +237,36 @@ class ScoreTrackII:
 
     @cython.ccall
     def enable_trackline(self):
-        """Turn on trackline with bedgraph output
-        """
+        """Turn on trackline with bedgraph output"""
         self.trackline = True
 
     @cython.ccall
-    def add_chromosome(self,
-                       chrom: bytes,
-                       chrom_max_len: cython.int):
+    def add_chromosome(self, chrom: bytes, chrom_max_len: cython.int):
         """
         chrom: chromosome name
         chrom_max_len: maximum number of data points in this chromosome
 
         """
         if chrom not in self.data:
-            self.data[chrom] = [np.zeros(chrom_max_len, dtype="int32"),  # pos
-                                # pileup at each interval, in float32 format
-                                np.zeros(chrom_max_len, dtype="float32"),
-                                # control at each interval, in float32 format
-                                np.zeros(chrom_max_len, dtype="float32"),
-                                # score at each interval, in float32 format
-                                np.zeros(chrom_max_len, dtype="float32")]
+            self.data[chrom] = [
+                np.zeros(chrom_max_len, dtype="int32"),  # pos
+                # pileup at each interval, in float32 format
+                np.zeros(chrom_max_len, dtype="float32"),
+                # control at each interval, in float32 format
+                np.zeros(chrom_max_len, dtype="float32"),
+                # score at each interval, in float32 format
+                np.zeros(chrom_max_len, dtype="float32"),
+            ]
             self.datalength[chrom] = 0
 
     @cython.ccall
-    def add(self,
-            chromosome: bytes,
-            endpos: cython.int,
-            chip: cython.float,
-            control: cython.float):
+    def add(
+        self,
+        chromosome: bytes,
+        endpos: cython.int,
+        chip: cython.float,
+        control: cython.float,
+    ):
         """Add a chr-endpos-sample-control block into data
         dictionary.
 
@@ -308,8 +305,7 @@ class ScoreTrackII:
         return
 
     @cython.ccall
-    def get_data_by_chr(self,
-                        chromosome: bytes):
+    def get_data_by_chr(self, chromosome: bytes):
         """Return array of counts by chromosome.
 
         The return value is a tuple:
@@ -322,14 +318,11 @@ class ScoreTrackII:
 
     @cython.ccall
     def get_chr_names(self):
-        """Return all the chromosome names stored.
-
-        """
+        """Return all the chromosome names stored."""
         return set(self.data.keys())
 
     @cython.ccall
-    def change_normalization_method(self,
-                                    normalization_method: cython.char):
+    def change_normalization_method(self, normalization_method: cython.char):
         """Change/set normalization method. However, I do not
         recommend change this back and forward, since some precision
         issue will happen -- I only keep two digits.
@@ -339,67 +332,61 @@ class ScoreTrackII:
                               M: scale to depth of 1 million;
                               N: not set/ raw pileup
         """
-        if normalization_method == ord('T'):
-            if self.normalization_method == ord('T'):  # do nothing
+        if normalization_method == ord("T"):
+            if self.normalization_method == ord("T"):  # do nothing
                 pass
-            elif self.normalization_method == ord('C'):
-                self.normalize(self.treat_edm/self.ctrl_edm,
-                               self.treat_edm/self.ctrl_edm)
-            elif self.normalization_method == ord('M'):
+            elif self.normalization_method == ord("C"):
+                self.normalize(
+                    self.treat_edm / self.ctrl_edm, self.treat_edm / self.ctrl_edm
+                )
+            elif self.normalization_method == ord("M"):
                 self.normalize(self.treat_edm, self.treat_edm)
-            elif self.normalization_method == ord('N'):
-                self.normalize(1, self.treat_edm/self.ctrl_edm)
+            elif self.normalization_method == ord("N"):
+                self.normalize(1, self.treat_edm / self.ctrl_edm)
             else:
                 raise NotImplementedError
-            self.normalization_method = ord('T')
-        elif normalization_method == ord('C'):
-            if self.normalization_method == ord('T'):
-                self.normalize(self.ctrl_edm/self.treat_edm,
-                               self.ctrl_edm/self.treat_edm)
-            elif self.normalization_method == ord('C'):  # do nothing
+            self.normalization_method = ord("T")
+        elif normalization_method == ord("C"):
+            if self.normalization_method == ord("T"):
+                self.normalize(
+                    self.ctrl_edm / self.treat_edm, self.ctrl_edm / self.treat_edm
+                )
+            elif self.normalization_method == ord("C"):  # do nothing
                 pass
-            elif self.normalization_method == ord('M'):
+            elif self.normalization_method == ord("M"):
                 self.normalize(self.ctrl_edm, self.ctrl_edm)
-            elif self.normalization_method == ord('N'):
-                self.normalize(self.ctrl_edm/self.treat_edm, 1)
+            elif self.normalization_method == ord("N"):
+                self.normalize(self.ctrl_edm / self.treat_edm, 1)
             else:
                 raise NotImplementedError
-            self.normalization_method = ord('C')
-        elif normalization_method == ord('M'):
-            if self.normalization_method == ord('T'):
-                self.normalize(1/self.treat_edm,
-                               1/self.treat_edm)
-            elif self.normalization_method == ord('C'):
-                self.normalize(1/self.ctrl_edm,
-                               1/self.ctrl_edm)
-            elif self.normalization_method == ord('M'):  # do nothing
+            self.normalization_method = ord("C")
+        elif normalization_method == ord("M"):
+            if self.normalization_method == ord("T"):
+                self.normalize(1 / self.treat_edm, 1 / self.treat_edm)
+            elif self.normalization_method == ord("C"):
+                self.normalize(1 / self.ctrl_edm, 1 / self.ctrl_edm)
+            elif self.normalization_method == ord("M"):  # do nothing
                 pass
-            elif self.normalization_method == ord('N'):
-                self.normalize(1/self.treat_edm,
-                               1/self.ctrl_edm)
+            elif self.normalization_method == ord("N"):
+                self.normalize(1 / self.treat_edm, 1 / self.ctrl_edm)
             else:
                 raise NotImplementedError
-            self.normalization_method = ord('M')
-        elif normalization_method == ord('N'):
-            if self.normalization_method == ord('T'):
-                self.normalize(self.treat_edm,
-                               self.treat_edm)
-            elif self.normalization_method == ord('C'):
-                self.normalize(self.ctrl_edm,
-                               self.ctrl_edm)
-            elif self.normalization_method == ord('M'):
-                self.normalize(self.treat_edm,
-                               self.ctrl_edm)
-            elif self.normalization_method == ord('N'):  # do nothing
+            self.normalization_method = ord("M")
+        elif normalization_method == ord("N"):
+            if self.normalization_method == ord("T"):
+                self.normalize(self.treat_edm, self.treat_edm)
+            elif self.normalization_method == ord("C"):
+                self.normalize(self.ctrl_edm, self.ctrl_edm)
+            elif self.normalization_method == ord("M"):
+                self.normalize(self.treat_edm, self.ctrl_edm)
+            elif self.normalization_method == ord("N"):  # do nothing
                 pass
             else:
                 raise NotImplementedError
-            self.normalization_method = ord('N')
+            self.normalization_method = ord("N")
 
     @cython.cfunc
-    def normalize(self,
-                  treat_scale: cython.float,
-                  control_scale: cython.float):
+    def normalize(self, treat_scale: cython.float, control_scale: cython.float):
         p: cnp.ndarray
         c: cnp.ndarray
         ln: cython.long
@@ -415,8 +402,7 @@ class ScoreTrackII:
         return
 
     @cython.ccall
-    def change_score_method(self,
-                            scoring_method: cython.char):
+    def change_score_method(self, scoring_method: cython.char):
         """
         scoring_method:  p: -log10 pvalue;
                          q: -log10 qvalue;
@@ -429,34 +415,33 @@ class ScoreTrackII:
                          M: maximum
                          m: fragment pileup per million reads
         """
-        if scoring_method == ord('p'):
+        if scoring_method == ord("p"):
             self.compute_pvalue()
-        elif scoring_method == ord('q'):
+        elif scoring_method == ord("q"):
             # if not already calculated p, compute pvalue first
-            if self.scoring_method != ord('p'):
+            if self.scoring_method != ord("p"):
                 self.compute_pvalue()
             self.compute_qvalue()
-        elif scoring_method == ord('l'):
+        elif scoring_method == ord("l"):
             self.compute_likelihood()
-        elif scoring_method == ord('s'):
+        elif scoring_method == ord("s"):
             self.compute_sym_likelihood()
-        elif scoring_method == ord('f'):
+        elif scoring_method == ord("f"):
             self.compute_logFE()
-        elif scoring_method == ord('F'):
+        elif scoring_method == ord("F"):
             self.compute_foldenrichment()
-        elif scoring_method == ord('d'):
+        elif scoring_method == ord("d"):
             self.compute_subtraction()
-        elif scoring_method == ord('m'):
+        elif scoring_method == ord("m"):
             self.compute_SPMR()
-        elif scoring_method == ord('M'):
+        elif scoring_method == ord("M"):
             self.compute_max()
         else:
             raise NotImplementedError
 
     @cython.cfunc
     def compute_pvalue(self):
-        """Compute -log_{10}(pvalue)
-        """
+        """Compute -log_{10}(pvalue)"""
         p: cnp.ndarray
         c: cnp.ndarray
         v: cnp.ndarray
@@ -474,22 +459,22 @@ class ScoreTrackII:
             v = self.data[chrom][3]
             ln = self.datalength[chrom]
             for i in range(ln):
-                v[i] = get_pscore(cython.cast(cython.int,
-                                              (p[i] + self.pseudocount)),
-                                  c[i] + self.pseudocount)
+                v[i] = get_pscore(
+                    cython.cast(cython.int, (p[i] + self.pseudocount)),
+                    c[i] + self.pseudocount,
+                )
                 try:
                     self.pvalue_stat[v[i]] += pos[i] - prev_pos
                 except Exception:
                     self.pvalue_stat[v[i]] = pos[i] - prev_pos
                 prev_pos = pos[i]
 
-        self.scoring_method = ord('p')
+        self.scoring_method = ord("p")
         return
 
     @cython.cfunc
     def compute_qvalue(self):
-        """Compute -log_{10}(qvalue)
-        """
+        """Compute -log_{10}(qvalue)"""
         pqtable: object
         i: cython.long
         ln: cython.long
@@ -497,7 +482,7 @@ class ScoreTrackII:
         v: cnp.ndarray
 
         # pvalue should be computed first!
-        assert self.scoring_method == ord('p')
+        assert self.scoring_method == ord("p")
         # make pqtable
         pqtable = self.make_pq_table()
 
@@ -508,7 +493,7 @@ class ScoreTrackII:
             for i in range(ln):
                 v[i] = pqtable[v[i]]
 
-        self.scoring_method = ord('q')
+        self.scoring_method = ord("q")
         return
 
     @cython.ccall
@@ -529,7 +514,7 @@ class ScoreTrackII:
         j: cython.long
         v: cython.float
         q: cython.float
-        pre_q: cython.float     # store the p and q scores
+        pre_q: cython.float  # store the p and q scores
         N: cython.long
         k: cython.float
         f: cython.float
@@ -537,14 +522,14 @@ class ScoreTrackII:
         pvalue_stat: dict
         unique_values: list
 
-        assert self.scoring_method == ord('p')
+        assert self.scoring_method == ord("p")
 
         pvalue_stat = self.pvalue_stat
 
         N = sum(pvalue_stat.values())
-        k = 1                           # rank
+        k = 1  # rank
         f = -log10(N)
-        pre_q = 2147483647              # save the previous q-value
+        pre_q = 2147483647  # save the previous q-value
 
         pvalue2qvalue = Float32to32Map(for_int=False)
         unique_values = sorted(list(pvalue_stat.keys()), reverse=True)
@@ -568,9 +553,7 @@ class ScoreTrackII:
 
     @cython.cfunc
     def compute_likelihood(self):
-        """Calculate log10 likelihood.
-
-        """
+        """Calculate log10 likelihood."""
         ln: cython.long
         i: cython.long
         chrom: bytes
@@ -583,7 +566,7 @@ class ScoreTrackII:
         for chrom in sorted(self.data.keys()):
             p = self.data[chrom][1].flat.__next__  # pileup in treatment
             c = self.data[chrom][2].flat.__next__  # pileup in control
-            v = self.data[chrom][3]                # score
+            v = self.data[chrom][3]  # score
             ln = self.datalength[chrom]
             v1 = 2
             v2 = 1
@@ -591,14 +574,12 @@ class ScoreTrackII:
                 v1 = p()
                 v2 = c()
                 v[i] = logLR_asym(v1 + pseudocount, v2 + pseudocount)
-        self.scoring_method = ord('l')
+        self.scoring_method = ord("l")
         return
 
     @cython.cfunc
     def compute_sym_likelihood(self):
-        """Calculate symmetric log10 likelihood.
-
-        """
+        """Calculate symmetric log10 likelihood."""
         ln: cython.long
         i: cython.long
         chrom: bytes
@@ -619,14 +600,12 @@ class ScoreTrackII:
                 v1 = p()
                 v2 = c()
                 v[i] = logLR_sym(v1 + pseudocount, v2 + pseudocount)
-        self.scoring_method = ord('s')
+        self.scoring_method = ord("s")
         return
 
     @cython.cfunc
     def compute_logFE(self):
-        """Calculate log10 fold enrichment (with 1 pseudocount).
-
-        """
+        """Calculate log10 fold enrichment (with 1 pseudocount)."""
         p: cnp.ndarray
         c: cnp.ndarray
         v: cnp.ndarray
@@ -643,14 +622,12 @@ class ScoreTrackII:
             ln = self.datalength[chrom]
             for i in range(ln):
                 v[i] = get_logFE(p[i] + pseudocount, c[i] + pseudocount)
-        self.scoring_method = ord('f')
+        self.scoring_method = ord("f")
         return
 
     @cython.cfunc
     def compute_foldenrichment(self):
-        """Calculate linear scale fold enrichment (with 1 pseudocount).
-
-        """
+        """Calculate linear scale fold enrichment (with 1 pseudocount)."""
         p: cnp.ndarray
         c: cnp.ndarray
         v: cnp.ndarray
@@ -666,8 +643,8 @@ class ScoreTrackII:
             v = self.data[chrom][3]
             ln = self.datalength[chrom]
             for i in range(ln):
-                v[i] = (p[i] + pseudocount)/(c[i] + pseudocount)
-        self.scoring_method = ord('F')
+                v[i] = (p[i] + pseudocount) / (c[i] + pseudocount)
+        self.scoring_method = ord("F")
         return
 
     @cython.cfunc
@@ -685,7 +662,7 @@ class ScoreTrackII:
             ln = self.datalength[chrom]
             for i in range(ln):
                 v[i] = p[i] - c[i]
-        self.scoring_method = ord('d')
+        self.scoring_method = ord("d")
         return
 
     @cython.cfunc
@@ -696,11 +673,13 @@ class ScoreTrackII:
         i: cython.long
         scale: cython.float
 
-        if self.normalization_method == ord('T') or self.normalization_method == ord('N'):
+        if self.normalization_method == ord("T") or self.normalization_method == ord(
+            "N"
+        ):
             scale = self.treat_edm
-        elif self.normalization_method == ord('C'):
+        elif self.normalization_method == ord("C"):
             scale = self.ctrl_edm
-        elif self.normalization_method == ord('M'):
+        elif self.normalization_method == ord("M"):
             scale = 1
 
         for chrom in sorted(self.data.keys()):
@@ -709,7 +688,7 @@ class ScoreTrackII:
             ln = self.datalength[chrom]
             for i in range(ln):
                 v[i] = p[i] / scale  # two digit precision may not be enough...
-        self.scoring_method = ord('m')
+        self.scoring_method = ord("m")
         return
 
     @cython.cfunc
@@ -727,15 +706,13 @@ class ScoreTrackII:
             ln = self.datalength[chrom]
             for i in range(ln):
                 v[i] = max(p[i], c[i])
-        self.scoring_method = ord('M')
+        self.scoring_method = ord("M")
         return
 
     @cython.ccall
-    def write_bedGraph(self,
-                       fhd,
-                       name: str,
-                       description: str,
-                       column: cython.short = 3):
+    def write_bedGraph(
+        self, fhd, name: str, description: str, column: cython.short = 3
+    ):
         """Write all data to fhd in bedGraph Format.
 
         fhd: a filehandler to save bedGraph.
@@ -762,8 +739,10 @@ class ScoreTrackII:
 
         if self.trackline:
             # this line is REQUIRED by the wiggle format for UCSC browser
-            write("track type=bedGraph name=\"%s\" description=\"%s\"\n" %
-                  (name.decode(), description))
+            write(
+                'track type=bedGraph name="%s" description="%s"\n'
+                % (name.decode(), description)
+            )
 
         chrs = self.get_chr_names()
         for chrom in sorted(chrs):
@@ -776,25 +755,25 @@ class ScoreTrackII:
             pre_v = value[0]
             for i in range(1, ln):
                 v = value[i]
-                p = pos[i-1]
+                p = pos[i - 1]
                 if abs(pre_v - v) > 1e-5:  # precision is 5 digits
-                    write("%s\t%d\t%d\t%.5f\n" %
-                          (chrom.decode(), pre, p, pre_v))
+                    write("%s\t%d\t%d\t%.5f\n" % (chrom.decode(), pre, p, pre_v))
                     pre_v = v
                     pre = p
             p = pos[-1]
             # last one
-            write("%s\t%d\t%d\t%.5f\n" %
-                  (chrom.decode(), pre, p, pre_v))
+            write("%s\t%d\t%d\t%.5f\n" % (chrom.decode(), pre, p, pre_v))
 
         return True
 
     @cython.ccall
-    def call_peaks(self,
-                   cutoff: cython.float = 5.0,
-                   min_length: cython.int = 200,
-                   max_gap: cython.int = 50,
-                   call_summits: bool = False):
+    def call_peaks(
+        self,
+        cutoff: cython.float = 5.0,
+        min_length: cython.int = 200,
+        max_gap: cython.int = 50,
+        call_summits: bool = False,
+    ):
         """This function try to find regions within which, scores
         are continuously higher than a given cutoff.
 
@@ -823,11 +802,11 @@ class ScoreTrackII:
         peak_content: list
 
         chrs = self.get_chr_names()
-        peaks = PeakIO()                      # dictionary to save peaks
+        peaks = PeakIO()  # dictionary to save peaks
 
         self.cutoff = cutoff
         for chrom in sorted(chrs):
-            peak_content = []           # to store points above cutoff
+            peak_content = []  # to store points above cutoff
 
             pos = self.data[chrom][0]
             sample = self.data[chrom][1]
@@ -841,7 +820,7 @@ class ScoreTrackII:
             # end positions of regions where score is above cutoff
             above_cutoff_endpos = pos[above_cutoff]
             # start positions of regions where score is above cutoff
-            above_cutoff_startpos = pos[above_cutoff-1]
+            above_cutoff_startpos = pos[above_cutoff - 1]
             # sample pileup height where score is above cutoff
             above_cutoff_sv = sample[above_cutoff]
             if above_cutoff_v.size == 0:
@@ -855,62 +834,62 @@ class ScoreTrackII:
                 above_cutoff_startpos[0] = 0
 
             # first bit of region above cutoff
-            peak_content.append((above_cutoff_startpos[0],
-                                 above_cutoff_endpos[0],
-                                 above_cutoff_v[0],
-                                 above_cutoff_sv[0],
-                                 above_cutoff[0]))
+            peak_content.append(
+                (
+                    above_cutoff_startpos[0],
+                    above_cutoff_endpos[0],
+                    above_cutoff_v[0],
+                    above_cutoff_sv[0],
+                    above_cutoff[0],
+                )
+            )
             for i in range(1, above_cutoff_startpos.size):
                 if above_cutoff_startpos[i] - peak_content[-1][1] <= max_gap:
                     # append
-                    peak_content.append((above_cutoff_startpos[i],
-                                         above_cutoff_endpos[i],
-                                         above_cutoff_v[i],
-                                         above_cutoff_sv[i],
-                                         above_cutoff[i]))
+                    peak_content.append(
+                        (
+                            above_cutoff_startpos[i],
+                            above_cutoff_endpos[i],
+                            above_cutoff_v[i],
+                            above_cutoff_sv[i],
+                            above_cutoff[i],
+                        )
+                    )
                 else:
                     # close
                     if call_summits:
-                        self.__close_peak2(peak_content,
-                                           peaks,
-                                           min_length,
-                                           chrom,
-                                           max_gap//2)
+                        self.__close_peak2(
+                            peak_content, peaks, min_length, chrom, max_gap // 2
+                        )
                     else:
-                        self.__close_peak(peak_content,
-                                          peaks,
-                                          min_length,
-                                          chrom)
-                    peak_content = [(above_cutoff_startpos[i],
-                                     above_cutoff_endpos[i],
-                                     above_cutoff_v[i],
-                                     above_cutoff_sv[i],
-                                     above_cutoff[i]),]
+                        self.__close_peak(peak_content, peaks, min_length, chrom)
+                    peak_content = [
+                        (
+                            above_cutoff_startpos[i],
+                            above_cutoff_endpos[i],
+                            above_cutoff_v[i],
+                            above_cutoff_sv[i],
+                            above_cutoff[i],
+                        ),
+                    ]
 
             # save the last peak
             if not peak_content:
                 continue
             else:
                 if call_summits:
-                    self.__close_peak2(peak_content,
-                                       peaks,
-                                       min_length,
-                                       chrom,
-                                       max_gap//2)
+                    self.__close_peak2(
+                        peak_content, peaks, min_length, chrom, max_gap // 2
+                    )
                 else:
-                    self.__close_peak(peak_content,
-                                      peaks,
-                                      min_length,
-                                      chrom)
+                    self.__close_peak(peak_content, peaks, min_length, chrom)
 
         return peaks
 
     @cython.cfunc
-    def __close_peak(self,
-                     peak_content: list,
-                     peaks: object,
-                     min_length: cython.int,
-                     chrom: bytes) -> bool:
+    def __close_peak(
+        self, peak_content: list, peaks: object, min_length: cython.int, chrom: bytes
+    ) -> bool:
         """Close the peak region, output peak boundaries, peak summit
         and scores, then add the peak to peakIO object.
 
@@ -948,10 +927,14 @@ class ScoreTrackII:
             summit_value = 0
             for i in range(len(peak_content)):
                 (tstart, tend, tvalue, tsummitvalue, tindex) = peak_content[i]
-                #for (tstart,tend,tvalue,tsummitvalue, tindex) in peak_content:
+                # for (tstart,tend,tvalue,tsummitvalue, tindex) in peak_content:
                 if not summit_value or summit_value < tsummitvalue:
-                    tsummit = [(tend + tstart) / 2,]
-                    tsummit_index = [tindex,]
+                    tsummit = [
+                        (tend + tstart) / 2,
+                    ]
+                    tsummit_index = [
+                        tindex,
+                    ]
                     summit_value = tsummitvalue
                 elif summit_value == tsummitvalue:
                     # remember continuous summit values
@@ -961,37 +944,40 @@ class ScoreTrackII:
             midindex = int((len(tsummit) + 1) / 2) - 1
             summit_pos = tsummit[midindex]
             summit_index = tsummit_index[midindex]
-            if self.scoring_method == ord('q'):
+            if self.scoring_method == ord("q"):
                 qscore = self.data[chrom][3][summit_index]
             else:
                 # if q value is not computed, use -1
                 qscore = -1
 
-            peaks.add(chrom,
-                      peak_content[0][0],
-                      peak_content[-1][1],
-                      summit=summit_pos,
-                      peak_score=self.data[chrom][3][summit_index],
-                      # should be the same as summit_value
-                      pileup=self.data[chrom][1][summit_index],  
-                      pscore=get_pscore(self.data[chrom][1][summit_index],
-                                        self.data[chrom][2][summit_index]),
-                      fold_change=(self.data[chrom][1][summit_index] +
-                                   self.pseudocount) / (self.data[chrom][2][summit_index] +
-                                                        self.pseudocount),
-                      qscore=qscore,
-                      )
+            peaks.add(
+                chrom,
+                peak_content[0][0],
+                peak_content[-1][1],
+                summit=summit_pos,
+                peak_score=self.data[chrom][3][summit_index],
+                # should be the same as summit_value
+                pileup=self.data[chrom][1][summit_index],
+                pscore=get_pscore(
+                    self.data[chrom][1][summit_index], self.data[chrom][2][summit_index]
+                ),
+                fold_change=(self.data[chrom][1][summit_index] + self.pseudocount)
+                / (self.data[chrom][2][summit_index] + self.pseudocount),
+                qscore=qscore,
+            )
             # start a new peak
             return True
 
     @cython.cfunc
-    def __close_peak2(self,
-                      peak_content: list,
-                      peaks: object,
-                      min_length: cython.int,
-                      chrom: bytes,
-                      smoothlen: cython.int = 51,
-                      min_valley: cython.float = 0.9) -> bool:
+    def __close_peak2(
+        self,
+        peak_content: list,
+        peaks: object,
+        min_length: cython.int,
+        chrom: bytes,
+        smoothlen: cython.int = 51,
+        min_valley: cython.float = 0.9,
+    ) -> bool:
         """Close the peak region, output peak boundaries, peak summit
         and scores, then add the peak to peakIO object.
 
@@ -1030,11 +1016,11 @@ class ScoreTrackII:
             start_boundary = 10
         peak_length = end - start
         if end - start < min_length:
-            return             # if the region is too small, reject it
+            return  # if the region is too small, reject it
 
-        peakdata = np.zeros(end - start, dtype='f4')
-        peakindices = np.zeros(end - start, dtype='i4')
-        for (tstart, tend, tvalue, tsvalue, tmpindex) in peak_content:
+        peakdata = np.zeros(end - start, dtype="f4")
+        peakindices = np.zeros(end - start, dtype="i4")
+        for tstart, tend, tvalue, tsvalue, tmpindex in peak_content:
             i = tstart - start + start_boundary
             j = tend - start + start_boundary
             peakdata[i:j] = tsvalue
@@ -1045,11 +1031,8 @@ class ScoreTrackII:
             return self.__close_peak(peak_content, peaks, min_length, chrom)
         else:
             # remove maxima that occurred in padding
-            i = np.searchsorted(summit_offsets,
-                                start_boundary)
-            j = np.searchsorted(summit_offsets,
-                                peak_length + start_boundary,
-                                'right')
+            i = np.searchsorted(summit_offsets, start_boundary)
+            j = np.searchsorted(summit_offsets, peak_length + start_boundary, "right")
             summit_offsets = summit_offsets[i:j]
 
         summit_offsets = enforce_peakyness(peakdata, summit_offsets)
@@ -1064,33 +1047,32 @@ class ScoreTrackII:
         if not (peak_scores > self.cutoff).all():
             return self.__close_peak(peak_content, peaks, min_length, chrom)
         for summit_offset, summit_index in zip(summit_offsets, summit_indices):
-            if self.scoring_method == ord('q'):
+            if self.scoring_method == ord("q"):
                 qscore = self.data[chrom][3][summit_index]
             else:
                 # if q value is not computed, use -1
                 qscore = -1
-            peaks.add(chrom,
-                      start,
-                      end,
-                      summit=start + summit_offset,
-                      peak_score=self.data[chrom][3][summit_index],
-                      # should be the same as summit_value
-                      pileup=self.data[chrom][1][summit_index],
-                      pscore=get_pscore(self.data[chrom][1][summit_index],
-                                        self.data[chrom][2][summit_index]),
-                      fold_change=(self.data[chrom][1][summit_index] +
-                                   self.pseudocount) / (self.data[chrom][2][summit_index] +
-                                                        self.pseudocount),
-                      qscore=qscore,
-                      )
+            peaks.add(
+                chrom,
+                start,
+                end,
+                summit=start + summit_offset,
+                peak_score=self.data[chrom][3][summit_index],
+                # should be the same as summit_value
+                pileup=self.data[chrom][1][summit_index],
+                pscore=get_pscore(
+                    self.data[chrom][1][summit_index], self.data[chrom][2][summit_index]
+                ),
+                fold_change=(self.data[chrom][1][summit_index] + self.pseudocount)
+                / (self.data[chrom][2][summit_index] + self.pseudocount),
+                qscore=qscore,
+            )
         # start a new peak
         return True
 
     @cython.cfunc
     def total(self) -> cython.long:
-        """Return the number of regions in this object.
-
-        """
+        """Return the number of regions in this object."""
         t: cython.long
         chrom: bytes
 
@@ -1100,12 +1082,14 @@ class ScoreTrackII:
         return t
 
     @cython.ccall
-    def call_broadpeaks(self,
-                        lvl1_cutoff: cython.float = 5.0,
-                        lvl2_cutoff: cython.float = 1.0,
-                        min_length: cython.int = 200,
-                        lvl1_max_gap: cython.int = 50,
-                        lvl2_max_gap: cython.int = 400):
+    def call_broadpeaks(
+        self,
+        lvl1_cutoff: cython.float = 5.0,
+        lvl2_cutoff: cython.float = 1.0,
+        min_length: cython.int = 200,
+        lvl1_max_gap: cython.int = 50,
+        lvl2_max_gap: cython.int = 400,
+    ):
         """This function try to find enriched regions within which,
         scores are continuously higher than a given cutoff for level
         1, and link them using the gap above level 2 cutoff with a
@@ -1123,14 +1107,18 @@ class ScoreTrackII:
         i: cython.int
         chrom: bytes
 
-        assert lvl1_cutoff > lvl2_cutoff, "level 1 cutoff should be larger than level 2."
-        assert lvl1_max_gap < lvl2_max_gap, "level 2 maximum gap should be larger than level 1."
-        lvl1_peaks = self.call_peaks(cutoff=lvl1_cutoff,
-                                     min_length=min_length,
-                                     max_gap=lvl1_max_gap)
-        lvl2_peaks = self.call_peaks(cutoff=lvl2_cutoff,
-                                     min_length=min_length,
-                                     max_gap=lvl2_max_gap)
+        assert lvl1_cutoff > lvl2_cutoff, (
+            "level 1 cutoff should be larger than level 2."
+        )
+        assert lvl1_max_gap < lvl2_max_gap, (
+            "level 2 maximum gap should be larger than level 1."
+        )
+        lvl1_peaks = self.call_peaks(
+            cutoff=lvl1_cutoff, min_length=min_length, max_gap=lvl1_max_gap
+        )
+        lvl2_peaks = self.call_peaks(
+            cutoff=lvl2_cutoff, min_length=min_length, max_gap=lvl2_max_gap
+        )
         chrs = lvl1_peaks.peaks.keys()
         broadpeaks = BroadPeakIO()
         # use lvl2_peaks as linking regions between lvl1_peaks
@@ -1138,7 +1126,7 @@ class ScoreTrackII:
             lvl1peakschrom = lvl1_peaks.peaks[chrom]
             lvl2peakschrom = lvl2_peaks.peaks[chrom]
             lvl1peakschrom_next = iter(lvl1peakschrom).__next__
-            tmppeakset = []             # to temporarily store lvl1 region inside a lvl2 region
+            tmppeakset = []  # to temporarily store lvl1 region inside a lvl2 region
             # our assumption is lvl1 regions should be included in lvl2 regions
             try:
                 lvl1 = lvl1peakschrom_next()
@@ -1148,41 +1136,32 @@ class ScoreTrackII:
                     lvl2 = lvl2peakschrom[i]
 
                     while True:
-                        if lvl2["start"] <= lvl1["start"] and lvl1["end"] <= lvl2["end"]:
+                        if (
+                            lvl2["start"] <= lvl1["start"]
+                            and lvl1["end"] <= lvl2["end"]
+                        ):
                             tmppeakset.append(lvl1)
                             lvl1 = lvl1peakschrom_next()
                         else:
                             # make a hierarchical broad peak
-                            #print lvl2["start"], lvl2["end"], lvl2["score"]
-                            self.__add_broadpeak(broadpeaks,
-                                                 chrom,
-                                                 lvl2,
-                                                 tmppeakset)
+                            # print lvl2["start"], lvl2["end"], lvl2["score"]
+                            self.__add_broadpeak(broadpeaks, chrom, lvl2, tmppeakset)
                             tmppeakset = []
                             break
             except StopIteration:
                 # no more strong (aka lvl1) peaks left
-                self.__add_broadpeak(broadpeaks,
-                                     chrom,
-                                     lvl2,
-                                     tmppeakset)
+                self.__add_broadpeak(broadpeaks, chrom, lvl2, tmppeakset)
                 tmppeakset = []
                 # add the rest lvl2 peaks
-                for j in range(i+1, len(lvl2peakschrom)):
-                    self.__add_broadpeak(broadpeaks,
-                                         chrom,
-                                         lvl2peakschrom[j],
-                                         tmppeakset)
+                for j in range(i + 1, len(lvl2peakschrom)):
+                    self.__add_broadpeak(
+                        broadpeaks, chrom, lvl2peakschrom[j], tmppeakset
+                    )
 
         return broadpeaks
 
-    def __add_broadpeak(self,
-                        bpeaks,
-                        chrom: bytes,
-                        lvl2peak: dict,
-                        lvl1peakset: list):
-        """Internal function to create broad peak.
-        """
+    def __add_broadpeak(self, bpeaks, chrom: bytes, lvl2peak: dict, lvl1peakset: list):
+        """Internal function to create broad peak."""
 
         blockNum: cython.int
         thickStart: cython.int
@@ -1199,60 +1178,65 @@ class ScoreTrackII:
         if not lvl1peakset:
             # will complement by adding 1bps start and end to this region
             # may change in the future if gappedPeak format was improved.
-            bpeaks.add(chrom,
-                       start,
-                       end,
-                       score=lvl2peak["score"],
-                       thickStart=(b"%d" % start),
-                       thickEnd=(b"%d" % end),
-                       blockNum=2,
-                       blockSizes=b"1,1",
-                       blockStarts=(b"0,%d" % (end-start-1)),
-                       pileup=lvl2peak["pileup"],
-                       pscore=lvl2peak["pscore"],
-                       fold_change=lvl2peak["fc"],
-                       qscore=lvl2peak["qscore"])
+            bpeaks.add(
+                chrom,
+                start,
+                end,
+                score=lvl2peak["score"],
+                thickStart=(b"%d" % start),
+                thickEnd=(b"%d" % end),
+                blockNum=2,
+                blockSizes=b"1,1",
+                blockStarts=(b"0,%d" % (end - start - 1)),
+                pileup=lvl2peak["pileup"],
+                pscore=lvl2peak["pscore"],
+                fold_change=lvl2peak["fc"],
+                qscore=lvl2peak["qscore"],
+            )
             return bpeaks
 
         thickStart = b"%d" % lvl1peakset[0]["start"]
         thickEnd = b"%d" % lvl1peakset[-1]["end"]
         blockNum = int(len(lvl1peakset))
         blockSizes = b",".join([b"%d" % x["length"] for x in lvl1peakset])
-        blockStarts = b",".join([b"%d" % (x["start"]-start) for x in lvl1peakset])
+        blockStarts = b",".join([b"%d" % (x["start"] - start) for x in lvl1peakset])
 
         if lvl2peak["start"] != thickStart:
             # add 1bp mark for the start of lvl2 peak
             thickStart = b"%d" % start
             blockNum += 1
-            blockSizes = b"1,"+blockSizes
-            blockStarts = b"0,"+blockStarts
+            blockSizes = b"1," + blockSizes
+            blockStarts = b"0," + blockStarts
         if lvl2peak["end"] != thickEnd:
             # add 1bp mark for the end of lvl2 peak
             thickEnd = b"%d" % end
             blockNum += 1
-            blockSizes = blockSizes+b",1"
-            blockStarts = blockStarts + b"," + (b"%d" % (end-start-1))
+            blockSizes = blockSizes + b",1"
+            blockStarts = blockStarts + b"," + (b"%d" % (end - start - 1))
 
         # add to BroadPeakIO object
-        bpeaks.add(chrom,
-                   start,
-                   end,
-                   score=lvl2peak["score"],
-                   thickStart=thickStart,
-                   thickEnd=thickEnd,
-                   blockNum=blockNum,
-                   blockSizes=blockSizes,
-                   blockStarts=blockStarts,
-                   pileup=lvl2peak["pileup"],
-                   pscore=lvl2peak["pscore"],
-                   fold_change=lvl2peak["fc"],
-                   qscore=lvl2peak["qscore"])
+        bpeaks.add(
+            chrom,
+            start,
+            end,
+            score=lvl2peak["score"],
+            thickStart=thickStart,
+            thickEnd=thickEnd,
+            blockNum=blockNum,
+            blockSizes=blockSizes,
+            blockStarts=blockStarts,
+            pileup=lvl2peak["pileup"],
+            pscore=lvl2peak["pscore"],
+            fold_change=lvl2peak["fc"],
+            qscore=lvl2peak["qscore"],
+        )
         return bpeaks
+
 
 @cython.cclass
 class TwoConditionScores:
-    """Class for saving two condition comparison scores.
-    """
+    """Class for saving two condition comparison scores."""
+
     # dictionary for data of each chromosome
     data: dict
     # length of data array of each chromosome
@@ -1272,15 +1256,17 @@ class TwoConditionScores:
     pvalue_stat2: dict
     pvalue_stat3: dict
 
-    def __init__(self,
-                 t1bdg,
-                 c1bdg,
-                 t2bdg,
-                 c2bdg,
-                 cond1_factor: cython.float = 1.0,
-                 cond2_factor: cython.float = 1.0,
-                 pseudocount: cython.float = 0.01,
-                 proportion_background_empirical_distribution: cython.float = 0.99999):
+    def __init__(
+        self,
+        t1bdg,
+        c1bdg,
+        t2bdg,
+        c2bdg,
+        cond1_factor: cython.float = 1.0,
+        cond2_factor: cython.float = 1.0,
+        pseudocount: cython.float = 0.01,
+        proportion_background_empirical_distribution: cython.float = 0.99999,
+    ):
         """t1bdg: a bedGraphTrackI object for treat 1
         c1bdg: a bedGraphTrackI object for control 1
         t2bdg: a bedGraphTrackI object for treat 2
@@ -1332,20 +1318,38 @@ class TwoConditionScores:
             (cond1_control_ps, cond1_control_vs) = self.c1bdg.get_data_by_chr(chrname)
             (cond2_treat_ps, cond2_treat_vs) = self.t2bdg.get_data_by_chr(chrname)
             (cond2_control_ps, cond2_control_vs) = self.c2bdg.get_data_by_chr(chrname)
-            chrom_max_len = len(cond1_treat_ps) + len(cond1_control_ps) + len(cond2_treat_ps) + len(cond2_control_ps)
+            chrom_max_len = (
+                len(cond1_treat_ps)
+                + len(cond1_control_ps)
+                + len(cond2_treat_ps)
+                + len(cond2_control_ps)
+            )
             self.add_chromosome(chrname, chrom_max_len)
-            self.build_chromosome(chrname,
-                                  cond1_treat_ps, cond1_control_ps,
-                                  cond2_treat_ps, cond2_control_ps,
-                                  cond1_treat_vs, cond1_control_vs,
-                                  cond2_treat_vs, cond2_control_vs)
+            self.build_chromosome(
+                chrname,
+                cond1_treat_ps,
+                cond1_control_ps,
+                cond2_treat_ps,
+                cond2_control_ps,
+                cond1_treat_vs,
+                cond1_control_vs,
+                cond2_treat_vs,
+                cond2_control_vs,
+            )
 
     @cython.cfunc
-    def build_chromosome(self, chrname,
-                         cond1_treat_ps, cond1_control_ps,
-                         cond2_treat_ps, cond2_control_ps,
-                         cond1_treat_vs, cond1_control_vs,
-                         cond2_treat_vs, cond2_control_vs):
+    def build_chromosome(
+        self,
+        chrname,
+        cond1_treat_ps,
+        cond1_control_ps,
+        cond2_treat_ps,
+        cond2_control_ps,
+        cond1_treat_vs,
+        cond1_control_vs,
+        cond2_treat_vs,
+        cond2_control_vs,
+    ):
         """Internal function to calculate scores for three types of comparisons.
 
         cond1_treat_ps, cond1_control_ps: position of treat and control of condition 1
@@ -1421,34 +1425,37 @@ class TwoConditionScores:
         c1chrs = self.c1bdg.get_chr_names()
         t2chrs = self.t2bdg.get_chr_names()
         c2chrs = self.c2bdg.get_chr_names()
-        common = reduce(lambda x, y: x.intersection(y),
-                        (t1chrs, c1chrs, t2chrs, c2chrs))
+        common = reduce(
+            lambda x, y: x.intersection(y), (t1chrs, c1chrs, t2chrs, c2chrs)
+        )
         return common
 
     @cython.cfunc
-    def add_chromosome(self,
-                       chrom: bytes,
-                       chrom_max_len: cython.int):
+    def add_chromosome(self, chrom: bytes, chrom_max_len: cython.int):
         """
         chrom: chromosome name
         chrom_max_len: maximum number of data points in this chromosome
 
         """
         if chrom not in self.data:
-            self.data[chrom] = [np.zeros(chrom_max_len, dtype="i4"),  # pos
-                                np.zeros(chrom_max_len, dtype="f4"),  # LLR t1 vs c1
-                                np.zeros(chrom_max_len, dtype="f4"),  # LLR t2 vs c2
-                                np.zeros(chrom_max_len, dtype="f4")]  # LLR t1 vs t2
+            self.data[chrom] = [
+                np.zeros(chrom_max_len, dtype="i4"),  # pos
+                np.zeros(chrom_max_len, dtype="f4"),  # LLR t1 vs c1
+                np.zeros(chrom_max_len, dtype="f4"),  # LLR t2 vs c2
+                np.zeros(chrom_max_len, dtype="f4"),
+            ]  # LLR t1 vs t2
             self.datalength[chrom] = 0
 
     @cython.cfunc
-    def add(self,
-            chromosome: bytes,
-            endpos: cython.int,
-            t1: cython.float,
-            c1: cython.float,
-            t2: cython.float,
-            c2: cython.float):
+    def add(
+        self,
+        chromosome: bytes,
+        endpos: cython.int,
+        t1: cython.float,
+        c1: cython.float,
+        t2: cython.float,
+        c2: cython.float,
+    ):
         """Take chr-endpos-sample1-control1-sample2-control2 and
         compute logLR for t1 vs c1, t2 vs c2, and t1 vs t2, then save
         values.
@@ -1468,12 +1475,18 @@ class TwoConditionScores:
         i = self.datalength[chromosome]
         c = self.data[chromosome]
         c[0][i] = endpos
-        c[1][i] = logLR_asym((t1+self.pseudocount) * self.cond1_factor,
-                             (c1+self.pseudocount) * self.cond1_factor)
-        c[2][i] = logLR_asym((t2+self.pseudocount) * self.cond2_factor,
-                             (c2+self.pseudocount) * self.cond2_factor)
-        c[3][i] = logLR_sym((t1+self.pseudocount) * self.cond1_factor,
-                            (t2+self.pseudocount) * self.cond2_factor)
+        c[1][i] = logLR_asym(
+            (t1 + self.pseudocount) * self.cond1_factor,
+            (c1 + self.pseudocount) * self.cond1_factor,
+        )
+        c[2][i] = logLR_asym(
+            (t2 + self.pseudocount) * self.cond2_factor,
+            (c2 + self.pseudocount) * self.cond2_factor,
+        )
+        c[3][i] = logLR_sym(
+            (t1 + self.pseudocount) * self.cond1_factor,
+            (t2 + self.pseudocount) * self.cond2_factor,
+        )
         self.datalength[chromosome] += 1
         return
 
@@ -1497,8 +1510,7 @@ class TwoConditionScores:
         return
 
     @cython.ccall
-    def get_data_by_chr(self,
-                        chromosome: bytes):
+    def get_data_by_chr(self, chromosome: bytes):
         """Return array of counts by chromosome.
 
         The return value is a tuple:
@@ -1511,17 +1523,11 @@ class TwoConditionScores:
 
     @cython.ccall
     def get_chr_names(self):
-        """Return all the chromosome names stored.
-
-        """
+        """Return all the chromosome names stored."""
         return set(self.data.keys())
 
     @cython.ccall
-    def write_bedGraph(self,
-                       fhd,
-                       name: str,
-                       description: str,
-                       column: cython.int = 3):
+    def write_bedGraph(self, fhd, name: str, description: str, column: cython.int = 3):
         """Write all data to fhd in bedGraph Format.
 
         fhd: a filehandler to save bedGraph.
@@ -1557,14 +1563,13 @@ class TwoConditionScores:
             ln = self.datalength[chrom]
             pre = 0
             if pos.shape[0] == 0:
-                continue        # skip if there's no data
+                continue  # skip if there's no data
             pre_v = value[0]
             for i in range(1, ln):
                 v = value[i]
-                p = pos[i-1]
+                p = pos[i - 1]
                 if abs(pre_v - v) >= 1e-6:
-                    write("%s\t%d\t%d\t%.5f\n" %
-                          (chrom.decode(), pre, p, pre_v))
+                    write("%s\t%d\t%d\t%.5f\n" % (chrom.decode(), pre, p, pre_v))
                     pre_v = v
                     pre = p
             p = pos[-1]
@@ -1574,10 +1579,7 @@ class TwoConditionScores:
         return True
 
     @cython.ccall
-    def write_matrix(self,
-                     fhd,
-                     name: str,
-                     description: str):
+    def write_matrix(self, fhd, name: str, description: str):
         """Write all data to fhd into five columns Format:
 
         col1: chr_start_end
@@ -1609,24 +1611,28 @@ class TwoConditionScores:
             ln = self.datalength[chrom]
             pre = 0
             if pos.shape[0] == 0:
-                continue        # skip if there's no data
+                continue  # skip if there's no data
             for i in range(0, ln):
                 v1 = value1[i]
                 v2 = value2[i]
                 v3 = value3[i]
                 p = pos[i]
-                write("%s:%d_%d\t%.5f\t%.5f\t%.5f\n" %
-                      (chrom.decode(), pre, p, v1, v2, v3))
+                write(
+                    "%s:%d_%d\t%.5f\t%.5f\t%.5f\n"
+                    % (chrom.decode(), pre, p, v1, v2, v3)
+                )
                 pre = p
 
         return True
 
     @cython.ccall
-    def call_peaks(self,
-                   cutoff: cython.float = 3,
-                   min_length: cython.int = 200,
-                   max_gap: cython.int = 100,
-                   call_summits: bool = False) -> tuple:
+    def call_peaks(
+        self,
+        cutoff: cython.float = 3,
+        min_length: cython.int = 200,
+        max_gap: cython.int = 100,
+        call_summits: bool = False,
+    ) -> tuple:
         """This function try to find regions within which, scores
         are continuously higher than a given cutoff.
 
@@ -1664,9 +1670,9 @@ class TwoConditionScores:
         cat3_endpos: cnp.ndarray
 
         chrs = self.get_chr_names()
-        cat1_peaks = PeakIO()       # dictionary to save peaks significant at condition 1
-        cat2_peaks = PeakIO()       # dictionary to save peaks significant at condition 2
-        cat3_peaks = PeakIO()       # dictionary to save peaks significant in both conditions
+        cat1_peaks = PeakIO()  # dictionary to save peaks significant at condition 1
+        cat2_peaks = PeakIO()  # dictionary to save peaks significant at condition 2
+        cat3_peaks = PeakIO()  # dictionary to save peaks significant in both conditions
 
         self.cutoff = cutoff
 
@@ -1679,8 +1685,8 @@ class TwoConditionScores:
             # regions with stronger cond1 signals
             cond1_over_cond2 = t1_vs_t2 >= cutoff
             # regions with stronger cond2 signals
-            cond2_over_cond1 = t1_vs_t2 <= -1*cutoff
-            cond1_equal_cond2 = and_(t1_vs_t2 >= -1*cutoff, t1_vs_t2 <= cutoff)
+            cond2_over_cond1 = t1_vs_t2 <= -1 * cutoff
+            cond1_equal_cond2 = and_(t1_vs_t2 >= -1 * cutoff, t1_vs_t2 <= cutoff)
             # enriched regions in condition 1
             cond1_sig = t1_vs_c1 >= cutoff
             # enriched regions in condition 2
@@ -1691,63 +1697,69 @@ class TwoConditionScores:
             # cond2 stronger than cond1, the indices
             cat2 = np.where(and_(cond2_over_cond1, cond2_sig))[0]
             # cond1 and cond2 are equal, the indices
-            cat3 = np.where(and_(and_(cond1_sig, cond2_sig),
-                                 cond1_equal_cond2))[0]
+            cat3 = np.where(and_(and_(cond1_sig, cond2_sig), cond1_equal_cond2))[0]
 
             # end positions of regions where score is above cutoff
             cat1_endpos = pos[cat1]
-            # start positions of regions where score is above cutoff            
-            cat1_startpos = pos[cat1-1]
+            # start positions of regions where score is above cutoff
+            cat1_startpos = pos[cat1 - 1]
             # end positions of regions where score is above cutoff
             cat2_endpos = pos[cat2]
             # start positions of regions where score is above cutoff
-            cat2_startpos = pos[cat2-1]
+            cat2_startpos = pos[cat2 - 1]
             # end positions of regions where score is above cutoff
             cat3_endpos = pos[cat3]
             # start positions of regions where score is above cutoff
-            cat3_startpos = pos[cat3-1]
+            cat3_startpos = pos[cat3 - 1]
 
             # for cat1: condition 1 stronger regions
-            self.__add_a_peak(cat1_peaks,
-                              chrom,
-                              cat1,
-                              cat1_startpos,
-                              cat1_endpos,
-                              t1_vs_t2,
-                              max_gap,
-                              min_length)
+            self.__add_a_peak(
+                cat1_peaks,
+                chrom,
+                cat1,
+                cat1_startpos,
+                cat1_endpos,
+                t1_vs_t2,
+                max_gap,
+                min_length,
+            )
             # for cat2: condition 2 stronger regions
-            self.__add_a_peak(cat2_peaks,
-                              chrom,
-                              cat2,
-                              cat2_startpos,
-                              cat2_endpos,
-                              -1 * t1_vs_t2,
-                              max_gap,
-                              min_length)
+            self.__add_a_peak(
+                cat2_peaks,
+                chrom,
+                cat2,
+                cat2_startpos,
+                cat2_endpos,
+                -1 * t1_vs_t2,
+                max_gap,
+                min_length,
+            )
             # for cat3: commonly strong regions
-            self.__add_a_peak(cat3_peaks,
-                              chrom,
-                              cat3,
-                              cat3_startpos,
-                              cat3_endpos,
-                              abs(t1_vs_t2),
-                              max_gap,
-                              min_length)
+            self.__add_a_peak(
+                cat3_peaks,
+                chrom,
+                cat3,
+                cat3_startpos,
+                cat3_endpos,
+                abs(t1_vs_t2),
+                max_gap,
+                min_length,
+            )
 
         return (cat1_peaks, cat2_peaks, cat3_peaks)
 
     @cython.cfunc
-    def __add_a_peak(self,
-                     peaks: object,
-                     chrom: bytes,
-                     indices: cnp.ndarray,
-                     startpos: cnp.ndarray,
-                     endpos: cnp.ndarray,
-                     score: cnp.ndarray,
-                     max_gap: cython.int,
-                     min_length: cython.int):
-        
+    def __add_a_peak(
+        self,
+        peaks: object,
+        chrom: bytes,
+        indices: cnp.ndarray,
+        startpos: cnp.ndarray,
+        endpos: cnp.ndarray,
+        score: cnp.ndarray,
+        max_gap: cython.int,
+        min_length: cython.int,
+    ):
         """For a given chromosome, merge nearby significant regions,
         filter out smaller regions, then add regions to PeakIO
         object.
@@ -1766,68 +1778,63 @@ class TwoConditionScores:
                 # data[chrom]['pos']
                 startpos[0] = 0
             # first bit of region above cutoff
-            peak_content.append((startpos[0],
-                                 endpos[0],
-                                 score[indices[0]]))
+            peak_content.append((startpos[0], endpos[0], score[indices[0]]))
             for i in range(1, startpos.size):
                 if startpos[i] - peak_content[-1][1] <= max_gap:
                     # append
-                    peak_content.append((startpos[i],
-                                         endpos[i],
-                                         score[indices[i]]))
+                    peak_content.append((startpos[i], endpos[i], score[indices[i]]))
                 else:
                     # close
                     if peak_content[-1][1] - peak_content[0][0] >= min_length:
                         mean_logLR = self.mean_from_peakcontent(peak_content)
                         # if peak_content[0][0] == 22414956:
                         #    print(f"{peak_content} {mean_logLR}")
-                        peaks.add(chrom,
-                                  peak_content[0][0],
-                                  peak_content[-1][1],
-                                  summit=-1,
-                                  peak_score=mean_logLR,
-                                  pileup=0,
-                                  pscore=0,
-                                  fold_change=0,
-                                  qscore=0,
-                                  )
-                    peak_content = [(startpos[i],
-                                     endpos[i],
-                                     score[indices[i]]),]
+                        peaks.add(
+                            chrom,
+                            peak_content[0][0],
+                            peak_content[-1][1],
+                            summit=-1,
+                            peak_score=mean_logLR,
+                            pileup=0,
+                            pscore=0,
+                            fold_change=0,
+                            qscore=0,
+                        )
+                    peak_content = [
+                        (startpos[i], endpos[i], score[indices[i]]),
+                    ]
 
             # save the last peak
             if peak_content:
                 if peak_content[-1][1] - peak_content[0][0] >= min_length:
                     mean_logLR = self.mean_from_peakcontent(peak_content)
-                    peaks.add(chrom,
-                              peak_content[0][0],
-                              peak_content[-1][1],
-                              summit=-1,
-                              peak_score=mean_logLR,
-                              pileup=0,
-                              pscore=0,
-                              fold_change=0,
-                              qscore=0,
-                              )
+                    peaks.add(
+                        chrom,
+                        peak_content[0][0],
+                        peak_content[-1][1],
+                        summit=-1,
+                        peak_score=mean_logLR,
+                        pileup=0,
+                        pscore=0,
+                        fold_change=0,
+                        qscore=0,
+                    )
 
         return
 
     @cython.cfunc
-    def mean_from_peakcontent(self,
-                              peakcontent: list) -> cython.float:
-        """
-
-        """
+    def mean_from_peakcontent(self, peakcontent: list) -> cython.float:
+        """ """
         tmp_s: cython.int
         tmp_e: cython.int
         ln: cython.int
         tmp_v: cython.long
-        sum_v: cython.long      # for better precision
+        sum_v: cython.long  # for better precision
         r: cython.float
         i: cython.int
 
         ln = 0
-        sum_v = 0                         # initialize sum_v as 0
+        sum_v = 0  # initialize sum_v as 0
         for i in range(len(peakcontent)):
             tmp_s = peakcontent[i][0]
             tmp_e = peakcontent[i][1]
@@ -1840,9 +1847,7 @@ class TwoConditionScores:
 
     @cython.cfunc
     def total(self) -> cython.long:
-        """Return the number of regions in this object.
-
-        """
+        """Return the number of regions in this object."""
         t: cython.long
         chrom: bytes
 

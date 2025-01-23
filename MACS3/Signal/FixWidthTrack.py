@@ -53,6 +53,7 @@ class FWTrack:
     Locations are stored and organized by sequence names (chr names) in a
     dict. They can be sorted by calling self.sort() function.
     """
+
     locations: dict
     pointer: dict
     buf_size: dict
@@ -65,20 +66,17 @@ class FWTrack:
     length = cython.declare(cython.long, visibility="public")
     fw = cython.declare(cython.int, visibility="public")
 
-    def __init__(self,
-                 fw: cython.int = 0,
-                 anno: str = "",
-                 buffer_size: cython.long = 100000):
-        """fw is the fixed-width for all locations.
-
-        """
+    def __init__(
+        self, fw: cython.int = 0, anno: str = "", buffer_size: cython.long = 100000
+    ):
+        """fw is the fixed-width for all locations."""
         self.fw = fw
-        self.locations = {}    # location pairs: two strands
-        self.pointer = {}      # location pairs
-        self.buf_size = {}     # location pairs
+        self.locations = {}  # location pairs: two strands
+        self.pointer = {}  # location pairs
+        self.buf_size = {}  # location pairs
         self.is_sorted = False
-        self.total = 0           # total tags
-        self.annotation = anno   # need to be figured out
+        self.total = 0  # total tags
+        self.annotation = anno  # need to be figured out
         # lengths of reference sequences, e.g. each chromosome in a genome
         self.rlengths = {}
         self.buffer_size = buffer_size
@@ -87,32 +85,24 @@ class FWTrack:
 
     @cython.ccall
     def destroy(self):
-        """Destroy this object and release mem.
-        """
+        """Destroy this object and release mem."""
         chrs: set
         chromosome: bytes
 
         chrs = self.get_chr_names()
         for chromosome in sorted(chrs):
             if chromosome in self.locations:
-                self.locations[chromosome][0].resize(self.buffer_size,
-                                                     refcheck=False)
-                self.locations[chromosome][0].resize(0,
-                                                     refcheck=False)
-                self.locations[chromosome][1].resize(self.buffer_size,
-                                                     refcheck=False)
-                self.locations[chromosome][1].resize(0,
-                                                     refcheck=False)
+                self.locations[chromosome][0].resize(self.buffer_size, refcheck=False)
+                self.locations[chromosome][0].resize(0, refcheck=False)
+                self.locations[chromosome][1].resize(self.buffer_size, refcheck=False)
+                self.locations[chromosome][1].resize(0, refcheck=False)
                 self.locations[chromosome] = [None, None]
                 self.locations.pop(chromosome)
         self.is_destroyed = True
         return
 
     @cython.ccall
-    def add_loc(self,
-                chromosome: bytes,
-                fiveendpos: cython.int,
-                strand: cython.int):
+    def add_loc(self, chromosome: bytes, fiveendpos: cython.int, strand: cython.int):
         """Add a location to the list according to the sequence name.
 
         chromosome -- mostly the chromosome name
@@ -125,8 +115,10 @@ class FWTrack:
 
         if chromosome not in self.locations:
             self.buf_size[chromosome] = [self.buffer_size, self.buffer_size]
-            self.locations[chromosome] = [np.zeros(self.buffer_size, dtype='i4'),
-                                          np.zeros(self.buffer_size, dtype='i4')]
+            self.locations[chromosome] = [
+                np.zeros(self.buffer_size, dtype="i4"),
+                np.zeros(self.buffer_size, dtype="i4"),
+            ]
             self.pointer[chromosome] = [0, 0]
             self.locations[chromosome][strand][0] = fiveendpos
             self.pointer[chromosome][strand] = 1
@@ -144,7 +136,7 @@ class FWTrack:
 
     @cython.ccall
     def finalize(self):
-        """ Resize np arrays for 5' positions and sort them in place
+        """Resize np arrays for 5' positions and sort them in place
 
         Note: If this function is called, it's impossible to append more files to this FWTrack object. So remember to call it after all the files are read!
         """
@@ -202,25 +194,22 @@ class FWTrack:
 
     @cython.ccall
     def get_locations_by_chr(self, chromosome: bytes):
-        """Return a tuple of two lists of locations for certain chromosome.
-
-        """
+        """Return a tuple of two lists of locations for certain chromosome."""
         if chromosome in self.locations:
             return self.locations[chromosome]
         else:
-            raise Exception("No such chromosome name (%s) in TrackI object!\n" % (chromosome))
+            raise Exception(
+                "No such chromosome name (%s) in TrackI object!\n" % (chromosome)
+            )
 
     @cython.ccall
     def get_chr_names(self) -> set:
-        """Return all the chromosome names stored in this track object.
-        """
+        """Return all the chromosome names stored in this track object."""
         return set(sorted(self.locations.keys()))
 
     @cython.ccall
     def sort(self):
-        """Naive sorting for locations.
-
-        """
+        """Naive sorting for locations."""
         c: bytes
         chrnames: set
 
@@ -259,7 +248,7 @@ class FWTrack:
         chrnames: set
 
         if maxnum < 0:
-            return self.total         # do nothing
+            return self.total  # do nothing
 
         if not self.is_sorted:
             self.sort()
@@ -278,9 +267,9 @@ class FWTrack:
             plus = self.locations[k][0]
             size = plus.shape[0]
             if len(plus) <= 1:
-                new_plus = plus         # do nothing
+                new_plus = plus  # do nothing
             else:
-                new_plus = np.zeros(self.pointer[k][0] + 1, dtype='i4')
+                new_plus = np.zeros(self.pointer[k][0] + 1, dtype="i4")
                 new_plus[i_new] = plus[i_new]  # first item
                 i_new += 1
                 # the number of tags in the current location
@@ -312,10 +301,9 @@ class FWTrack:
             minus = self.locations[k][1]
             size = minus.shape[0]
             if len(minus) <= 1:
-                new_minus = minus         # do nothing
+                new_minus = minus  # do nothing
             else:
-                new_minus = np.zeros(self.pointer[k][1] + 1,
-                                     dtype='i4')
+                new_minus = np.zeros(self.pointer[k][1] + 1, dtype="i4")
                 new_minus[i_new] = minus[i_new]  # first item
                 i_new += 1
                 # the number of tags in the current location
@@ -369,15 +357,17 @@ class FWTrack:
             # for each chromosome.
             # This loop body is too big, I may need to split code later...
 
-            num = cython.cast(cython.int,
-                              round(self.locations[k][0].shape[0] * percent, 5))
+            num = cython.cast(
+                cython.int, round(self.locations[k][0].shape[0] * percent, 5)
+            )
             np.random.shuffle(self.locations[k][0])
             self.locations[k][0].resize(num, refcheck=False)
             self.locations[k][0].sort()
             self.pointer[k][0] = self.locations[k][0].shape[0]
 
-            num = cython.cast(cython.int,
-                              round(self.locations[k][1].shape[0] * percent, 5))
+            num = cython.cast(
+                cython.int, round(self.locations[k][1].shape[0] * percent, 5)
+            )
             np.random.shuffle(self.locations[k][1])
             self.locations[k][1].resize(num, refcheck=False)
             self.locations[k][1].sort()
@@ -426,24 +416,19 @@ class FWTrack:
 
             for i in range(plus.shape[0]):
                 p = plus[i]
-                fhd.write("%s\t%d\t%d\t.\t.\t%s\n" % (k.decode(),
-                                                      p,
-                                                      p + self.fw,
-                                                      "+"))
+                fhd.write("%s\t%d\t%d\t.\t.\t%s\n" % (k.decode(), p, p + self.fw, "+"))
 
             minus = self.locations[k][1]
 
             for i in range(minus.shape[0]):
                 p = minus[i]
-                fhd.write("%s\t%d\t%d\t.\t.\t%s\n" % (k.decode(),
-                                                      p-self.fw,
-                                                      p,
-                                                      "-"))
+                fhd.write("%s\t%d\t%d\t.\t.\t%s\n" % (k.decode(), p - self.fw, p, "-"))
         return
 
     @cython.ccall
-    def extract_region_tags(self, chromosome: bytes,
-                            startpos: cython.int, endpos: cython.int) -> tuple:
+    def extract_region_tags(
+        self, chromosome: bytes, startpos: cython.int, endpos: cython.int
+    ) -> tuple:
         i: cython.int
         pos: cython.int
         rt_plus: np.ndarray(cython.int, ndim=1)
@@ -455,7 +440,9 @@ class FWTrack:
             self.sort()
 
         chrnames = self.get_chr_names()
-        assert chromosome in chrnames, "chromosome %s can't be found in the FWTrack object." % chromosome
+        assert chromosome in chrnames, (
+            "chromosome %s can't be found in the FWTrack object." % chromosome
+        )
 
         (plus, minus) = self.locations[chromosome]
 
@@ -483,10 +470,13 @@ class FWTrack:
         return (rt_plus, rt_minus)
 
     @cython.ccall
-    def compute_region_tags_from_peaks(self, peaks: PeakIO,
-                                       func,
-                                       window_size: cython.int = 100,
-                                       cutoff: cython.float = 5.0) -> list:
+    def compute_region_tags_from_peaks(
+        self,
+        peaks: PeakIO,
+        func,
+        window_size: cython.int = 100,
+        cutoff: cython.float = 5.0,
+    ) -> list:
         """Extract tags in peak, then apply func on extracted tags.
 
         peaks: redefined regions to extract raw tags in PeakIO type: check cPeakIO.pyx.
@@ -534,7 +524,9 @@ class FWTrack:
         chrnames = self.get_chr_names()
 
         for chrom in sorted(pchrnames):
-            assert chrom in chrnames, "chromosome %s can't be found in the FWTrack object." % chrom
+            assert chrom in chrnames, (
+                "chromosome %s can't be found in the FWTrack object." % chrom
+            )
             (plus, minus) = self.locations[chrom]
             cpeaks = peaks.get_data_from_chrom(chrom)
             prev_i = 0
@@ -568,10 +560,18 @@ class FWTrack:
                         temp.append(pos)
                 rt_minus = np.array(temp, dtype="i4")
 
-                retval.append(func(chrom, rt_plus, rt_minus, startpos, endpos,
-                                   name=name,
-                                   window_size=window_size,
-                                   cutoff=cutoff))
+                retval.append(
+                    func(
+                        chrom,
+                        rt_plus,
+                        rt_minus,
+                        startpos,
+                        endpos,
+                        name=name,
+                        window_size=window_size,
+                        cutoff=cutoff,
+                    )
+                )
                 # rewind window_size
                 for i in range(prev_i, 0, -1):
                     if plus[prev_i] - plus[i] >= window_size:
@@ -587,11 +587,15 @@ class FWTrack:
         return retval
 
     @cython.ccall
-    def pileup_a_chromosome(self, chrom: bytes, ds: list,
-                            scale_factor_s: list,
-                            baseline_value: cython.float = 0.0,
-                            directional: bool = True,
-                            end_shift: cython.int = 0) -> list:
+    def pileup_a_chromosome(
+        self,
+        chrom: bytes,
+        ds: list,
+        scale_factor_s: list,
+        baseline_value: cython.float = 0.0,
+        directional: bool = True,
+        end_shift: cython.int = 0,
+    ) -> list:
         """pileup a certain chromosome, return [p,v] (end position and
         value) list.
 
@@ -629,19 +633,21 @@ class FWTrack:
 
         chrlengths = self.get_rlengths()
         rlength = chrlengths[chrom]
-        assert len(ds) == len(scale_factor_s), "ds and scale_factor_s must have the same length!"
+        assert len(ds) == len(scale_factor_s), (
+            "ds and scale_factor_s must have the same length!"
+        )
 
         # adjust extension length according to 'directional' and
         # 'halfextension' setting.
         for d in ds:
             if directional:
                 # only extend to 3' side
-                five_shift_s.append(- end_shift)
+                five_shift_s.append(-end_shift)
                 three_shift_s.append(end_shift + d)
             else:
                 # both sides
-                five_shift_s.append(d//2 - end_shift)
-                three_shift_s.append(end_shift + d - d//2)
+                five_shift_s.append(d // 2 - end_shift)
+                three_shift_s.append(end_shift + d - d // 2)
 
         prev_pileup = None
 
@@ -649,18 +655,18 @@ class FWTrack:
             five_shift = five_shift_s[i]
             three_shift = three_shift_s[i]
             scale_factor = scale_factor_s[i]
-            tmp_pileup = se_all_in_one_pileup(self.locations[chrom][0],
-                                              self.locations[chrom][1],
-                                              five_shift,
-                                              three_shift,
-                                              rlength,
-                                              scale_factor,
-                                              baseline_value)
+            tmp_pileup = se_all_in_one_pileup(
+                self.locations[chrom][0],
+                self.locations[chrom][1],
+                five_shift,
+                three_shift,
+                rlength,
+                scale_factor,
+                baseline_value,
+            )
 
             if prev_pileup:
-                prev_pileup = over_two_pv_array(prev_pileup,
-                                                tmp_pileup,
-                                                func="max")
+                prev_pileup = over_two_pv_array(prev_pileup, tmp_pileup, func="max")
             else:
                 prev_pileup = tmp_pileup
 
@@ -669,31 +675,23 @@ class FWTrack:
 
 @cython.inline
 @cython.cfunc
-def left_sum(data,
-             pos: cython.int,
-             width: cython.int) -> cython.int:
+def left_sum(data, pos: cython.int, width: cython.int) -> cython.int:
     return sum([data[x] for x in data if x <= pos and x >= pos - width])
 
 
 @cython.inline
 @cython.cfunc
-def right_sum(data,
-              pos: cython.int,
-              width: cython.int) -> cython.int:
+def right_sum(data, pos: cython.int, width: cython.int) -> cython.int:
     return sum([data[x] for x in data if x >= pos and x <= pos + width])
 
 
 @cython.inline
 @cython.cfunc
-def left_forward(data,
-                 pos: cython.int,
-                 window_size: cython.int) -> cython.int:
-    return data.get(pos, 0) - data.get(pos-window_size, 0)
+def left_forward(data, pos: cython.int, window_size: cython.int) -> cython.int:
+    return data.get(pos, 0) - data.get(pos - window_size, 0)
 
 
 @cython.inline
 @cython.cfunc
-def right_forward(data,
-                  pos: cython.int,
-                  window_size: cython.int) -> cython.int:
+def right_forward(data, pos: cython.int, window_size: cython.int) -> cython.int:
     return data.get(pos + window_size, 0) - data.get(pos, 0)

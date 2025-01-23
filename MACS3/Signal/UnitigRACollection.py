@@ -8,6 +8,7 @@ This code is free software; you can redistribute it and/or modify it
 under the terms of the BSD License (see the file COPYING included
 with the distribution).
 """
+
 # ------------------------------------
 # python modules
 # ------------------------------------
@@ -27,7 +28,7 @@ __version__ = "Parser $Revision$"
 __author__ = "Tao Liu <tliu4@buffalo.edu>"
 __doc__ = "All Parser classes"
 
-__DNACOMPLEMENT__ = b'\x00\x01\x02\x03\x04\x05\x06\x07\x08\t\n\x0b\x0c\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f !"#$%&\'()*+,-./0123456789:;<=>?@TBGDEFCHIJKLMNOPQRSAUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~\x7f\x80\x81\x82\x83\x84\x85\x86\x87\x88\x89\x8a\x8b\x8c\x8d\x8e\x8f\x90\x91\x92\x93\x94\x95\x96\x97\x98\x99\x9a\x9b\x9c\x9d\x9e\x9f\xa0\xa1\xa2\xa3\xa4\xa5\xa6\xa7\xa8\xa9\xaa\xab\xac\xad\xae\xaf\xb0\xb1\xb2\xb3\xb4\xb5\xb6\xb7\xb8\xb9\xba\xbb\xbc\xbd\xbe\xbf\xc0\xc1\xc2\xc3\xc4\xc5\xc6\xc7\xc8\xc9\xca\xcb\xcc\xcd\xce\xcf\xd0\xd1\xd2\xd3\xd4\xd5\xd6\xd7\xd8\xd9\xda\xdb\xdc\xdd\xde\xdf\xe0\xe1\xe2\xe3\xe4\xe5\xe6\xe7\xe8\xe9\xea\xeb\xec\xed\xee\xef\xf0\xf1\xf2\xf3\xf4\xf5\xf6\xf7\xf8\xf9\xfa\xfb\xfc\xfd\xfe\xff' # A trans table to convert A to T, C to G, G to C, and T to A.
+__DNACOMPLEMENT__ = b"\x00\x01\x02\x03\x04\x05\x06\x07\x08\t\n\x0b\x0c\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f !\"#$%&'()*+,-./0123456789:;<=>?@TBGDEFCHIJKLMNOPQRSAUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~\x7f\x80\x81\x82\x83\x84\x85\x86\x87\x88\x89\x8a\x8b\x8c\x8d\x8e\x8f\x90\x91\x92\x93\x94\x95\x96\x97\x98\x99\x9a\x9b\x9c\x9d\x9e\x9f\xa0\xa1\xa2\xa3\xa4\xa5\xa6\xa7\xa8\xa9\xaa\xab\xac\xad\xae\xaf\xb0\xb1\xb2\xb3\xb4\xb5\xb6\xb7\xb8\xb9\xba\xbb\xbc\xbd\xbe\xbf\xc0\xc1\xc2\xc3\xc4\xc5\xc6\xc7\xc8\xc9\xca\xcb\xcc\xcd\xce\xcf\xd0\xd1\xd2\xd3\xd4\xd5\xd6\xd7\xd8\xd9\xda\xdb\xdc\xdd\xde\xdf\xe0\xe1\xe2\xe3\xe4\xe5\xe6\xe7\xe8\xe9\xea\xeb\xec\xed\xee\xef\xf0\xf1\xf2\xf3\xf4\xf5\xf6\xf7\xf8\xf9\xfa\xfb\xfc\xfd\xfe\xff"  # A trans table to convert A to T, C to G, G to C, and T to A.
 
 __CIGARCODE__ = "MIDNSHP=X"
 
@@ -42,9 +43,9 @@ __CIGARCODE__ = "MIDNSHP=X"
 
 @cython.cclass
 class UnitigRAs:
-    """
-    """
-    RAlists: list            # [RAlists_T, RAlists_C]
+    """ """
+
+    RAlists: list  # [RAlists_T, RAlists_C]
     seq: bytes
     unitig_aln: bytes
     reference_aln: bytes
@@ -55,14 +56,18 @@ class UnitigRAs:
     reference_length: cython.long
     aln_length: cython.long
 
-    def __init__(self,
-                 chrom: bytes,
-                 lpos: cython.long,
-                 rpos: cython.long,
-                 unitig_aln: bytes,
-                 reference_aln: bytes,
-                 RAlists: list):
-        assert len(unitig_aln) == len(reference_aln), Exception("aln on unitig and reference should be the same length!")
+    def __init__(
+        self,
+        chrom: bytes,
+        lpos: cython.long,
+        rpos: cython.long,
+        unitig_aln: bytes,
+        reference_aln: bytes,
+        RAlists: list,
+    ):
+        assert len(unitig_aln) == len(reference_aln), Exception(
+            "aln on unitig and reference should be the same length!"
+        )
         self.chrom = chrom
         self.lpos = lpos
         self.rpos = rpos
@@ -70,7 +75,7 @@ class UnitigRAs:
         self.reference_aln = reference_aln
         self.RAlists = RAlists
         # fill in other information
-        self.seq = self.unitig_aln.replace(b'-', b'')
+        self.seq = self.unitig_aln.replace(b"-", b"")
         self.unitig_length = len(self.seq)
         self.reference_length = rpos - lpos
         self.aln_length = len(unitig_aln)
@@ -100,18 +105,35 @@ class UnitigRAs:
             raise KeyError("Unavailable key:", keyname)
 
     def __getstate__(self):
-        return (self.RAlists, self.seq, self.unitig_aln, self.reference_aln,
-                self.chrom, self.lpos, self.rpos, self.unitig_length,
-                self.reference_length, self.aln_length)
+        return (
+            self.RAlists,
+            self.seq,
+            self.unitig_aln,
+            self.reference_aln,
+            self.chrom,
+            self.lpos,
+            self.rpos,
+            self.unitig_length,
+            self.reference_length,
+            self.aln_length,
+        )
 
     def __setstate__(self, state):
-        (self.RAlists, self.seq, self.unitig_aln, self.reference_aln,
-         self.chrom, self.lpos, self.rpos, self.unitig_length,
-         self.reference_length, self.aln_length) = state
+        (
+            self.RAlists,
+            self.seq,
+            self.unitig_aln,
+            self.reference_aln,
+            self.chrom,
+            self.lpos,
+            self.rpos,
+            self.unitig_length,
+            self.reference_length,
+            self.aln_length,
+        ) = state
 
     @cython.ccall
-    def get_variant_bq_by_ref_pos(self,
-                                  ref_pos: cython.long) -> tuple:
+    def get_variant_bq_by_ref_pos(self, ref_pos: cython.long) -> tuple:
         """
         return (s, bq_list_t, bq_list_c, strand_list_t, strand_list_c)
         """
@@ -154,11 +176,11 @@ class UnitigRAs:
             index_aln += 1
 
         # index_aln should be the position on aln
-        s = self.unitig_aln[index_aln:index_aln+1]
+        s = self.unitig_aln[index_aln : index_aln + 1]
         # find the index on unitig
-        index_unitig = len(self.unitig_aln[:index_aln+1].replace(b'-', b''))
+        index_unitig = len(self.unitig_aln[: index_aln + 1].replace(b"-", b""))
 
-        if s == b'-':                     # deletion
+        if s == b"-":  # deletion
             for ra in self.RAlists[0]:
                 ra_seq = ra["SEQ"]
                 l_read = ra["l"]
@@ -176,17 +198,27 @@ class UnitigRAs:
                 bq_list_c.append(93)
                 strand_list_c.append(ra["strand"])
                 pos_list_c.append(ra_pos)
-            return (bytearray(b'*'), bq_list_t, bq_list_c, strand_list_t,
-                    strand_list_c, tip_list_t, pos_list_t, pos_list_c)
+            return (
+                bytearray(b"*"),
+                bq_list_t,
+                bq_list_c,
+                strand_list_t,
+                strand_list_c,
+                tip_list_t,
+                pos_list_t,
+                pos_list_c,
+            )
 
         if index_aln < self.aln_length - 1:
             for i in range(index_aln + 1, self.aln_length):
-                if self.reference_aln[i] == 45:   # insertion detected, 45 means b'-'
-                    s += self.unitig_aln[i:i+1]  # we extend the s string to contain the inserted seq
+                if self.reference_aln[i] == 45:  # insertion detected, 45 means b'-'
+                    s += self.unitig_aln[
+                        i : i + 1
+                    ]  # we extend the s string to contain the inserted seq
                 else:
                     break
 
-        for ra in self.RAlists[0]:        # treatment
+        for ra in self.RAlists[0]:  # treatment
             ra_seq = ra["SEQ"]
             l_read = ra["l"]
             ra_pos = index_unitig - self.seq.find(ra_seq) - 1
@@ -199,7 +231,7 @@ class UnitigRAs:
                 bq_list_t.append(ra["binaryqual"][ra_pos])
                 strand_list_t.append(ra["strand"])
 
-        for ra in self.RAlists[1]:        # control
+        for ra in self.RAlists[1]:  # control
             ra_seq = ra["SEQ"]
             l_read = ra["l"]
             ra_pos = index_unitig - self.seq.find(ra_seq) - 1
@@ -208,8 +240,16 @@ class UnitigRAs:
                 bq_list_c.append(ra["binaryqual"][ra_pos])
                 strand_list_c.append(ra["strand"])
 
-        return (bytearray(s), bq_list_t, bq_list_c, strand_list_t,
-                strand_list_c, tip_list_t, pos_list_t, pos_list_c)
+        return (
+            bytearray(s),
+            bq_list_t,
+            bq_list_c,
+            strand_list_t,
+            strand_list_c,
+            tip_list_t,
+            pos_list_t,
+            pos_list_c,
+        )
 
 
 @cython.cclass
@@ -218,20 +258,18 @@ class UnitigCollection:
     PeakIO.
 
     """
-    chrom: bytes
-    peak: PeakIO             # A PeakIO object
-    URAs_list: list
-    left: cython.long               # left position of peak
-    right: cython.long              # right position of peak
-    length: cython.long             # length of peak
-    URAs_left: cython.long          # left position of all RAs in the collection
-    URAs_right: cython.long         # right position of all RAs in the collection
-    is_sorted: bool             # if sorted by lpos
 
-    def __init__(self,
-                 chrom: bytes,
-                 peak: PeakIO,
-                 URAs_list: list = []):
+    chrom: bytes
+    peak: PeakIO  # A PeakIO object
+    URAs_list: list
+    left: cython.long  # left position of peak
+    right: cython.long  # right position of peak
+    length: cython.long  # length of peak
+    URAs_left: cython.long  # left position of all RAs in the collection
+    URAs_right: cython.long  # right position of all RAs in the collection
+    is_sorted: bool  # if sorted by lpos
+
+    def __init__(self, chrom: bytes, peak: PeakIO, URAs_list: list = []):
         self.chrom = chrom
         self.peak = peak
         self.URAs_list = URAs_list
@@ -240,7 +278,7 @@ class UnitigCollection:
         self.length = self.right - self.left
         self.URAs_left = URAs_list[0]["lpos"]  # initial assignment of RAs_left
         self.URAs_right = URAs_list[-1]["rpos"]  # initial assignment of RAs_right
-        self.sort()                           # it will set self.is_sorted = True
+        self.sort()  # it will set self.is_sorted = True
         # check RAs_left and RAs_right
         for ura in URAs_list:
             if ura["lpos"] < self.URAs_left:
@@ -269,27 +307,42 @@ class UnitigCollection:
             raise KeyError("Unavailable key:", keyname)
 
     def __getstate__(self):
-        return (self.chrom, self.peak, self.URAs_list, self.left, self.right,
-                self.length, self.URAs_left, self.URAs_right, self.is_sorted)
+        return (
+            self.chrom,
+            self.peak,
+            self.URAs_list,
+            self.left,
+            self.right,
+            self.length,
+            self.URAs_left,
+            self.URAs_right,
+            self.is_sorted,
+        )
 
     def __setstate__(self, state):
-        (self.chrom, self.peak, self.URAs_list, self.left, self.right,
-         self.length, self.URAs_left, self.URAs_right, self.is_sorted) = state
+        (
+            self.chrom,
+            self.peak,
+            self.URAs_list,
+            self.left,
+            self.right,
+            self.length,
+            self.URAs_left,
+            self.URAs_right,
+            self.is_sorted,
+        ) = state
 
     @cython.ccall
     def sort(self):
-        """Sort RAs according to lpos. Should be used after realignment.
-
-        """
+        """Sort RAs according to lpos. Should be used after realignment."""
         self.URAs_list.sort(key=itemgetter("lpos"))
         self.is_sorted = True
         return
 
     @cython.ccall
-    def get_PosReadsInfo_ref_pos(self,
-                                 ref_pos: cython.long,
-                                 ref_nt: bytes,
-                                 Q: cython.int = 20):
+    def get_PosReadsInfo_ref_pos(
+        self, ref_pos: cython.long, ref_nt: bytes, Q: cython.int = 20
+    ):
         """Generate a PosReadsInfo for: object a given reference genome
         position.
 
@@ -312,13 +365,23 @@ class UnitigCollection:
         for i in range(len(self.URAs_list)):
             ura = self.URAs_list[i]
             if ura["lpos"] <= ref_pos and ura["rpos"] > ref_pos:
-                (s, bq_list_t, bq_list_c, strand_list_t, strand_list_c,
-                 tip_list_t, pos_list_t, pos_list_c) = ura.get_variant_bq_by_ref_pos(ref_pos)
+                (
+                    s,
+                    bq_list_t,
+                    bq_list_c,
+                    strand_list_t,
+                    strand_list_c,
+                    tip_list_t,
+                    pos_list_t,
+                    pos_list_c,
+                ) = ura.get_variant_bq_by_ref_pos(ref_pos)
                 for i in range(len(bq_list_t)):
-                    posreadsinfo_p.add_T(i, bytes(s), bq_list_t[i],
-                                         strand_list_t[i], tip_list_t[i], Q=Q)
+                    posreadsinfo_p.add_T(
+                        i, bytes(s), bq_list_t[i], strand_list_t[i], tip_list_t[i], Q=Q
+                    )
                 for i in range(len(bq_list_c)):
-                    posreadsinfo_p.add_C(i, bytes(s), bq_list_c[i],
-                                         strand_list_c[i], Q=Q)
+                    posreadsinfo_p.add_C(
+                        i, bytes(s), bq_list_c[i], strand_list_c[i], Q=Q
+                    )
 
         return posreadsinfo_p

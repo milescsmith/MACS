@@ -17,6 +17,7 @@ the distribution).
 from MACS3.Utilities.Constants import MAX_PAIRNUM
 from MACS3.Utilities.OptValidator import opt_validate_predictd
 from MACS3.Signal.PeakModel import PeakModel, NotEnoughPairsException
+
 # from MACS3.Signal.Prob import binomial_cdf_inv
 from MACS3.IO.OutputWriter import model2r_script
 # ------------------------------------
@@ -25,9 +26,7 @@ from MACS3.IO.OutputWriter import model2r_script
 
 
 def run(o_options):
-    """The Main function/pipeline for duplication filter.
-
-    """
+    """The Main function/pipeline for duplication filter."""
     # Parse options...
     options = opt_validate_predictd(o_options)
     # end of parsing commandline options
@@ -36,7 +35,7 @@ def run(o_options):
     debug = options.debug
     # error = options.error
     # 0 output arguments
-    options.PE_MODE = options.format in ('BAMPE', 'BEDPE')
+    options.PE_MODE = options.format in ("BAMPE", "BEDPE")
 
     # 1 Read tag files
     if options.PE_MODE:
@@ -60,17 +59,17 @@ def run(o_options):
         return
 
     try:
-        peakmodel = PeakModel(treatment=treat,
-                              max_pairnum=MAX_PAIRNUM,
-                              opt=options
-                              )
+        peakmodel = PeakModel(treatment=treat, max_pairnum=MAX_PAIRNUM, opt=options)
         peakmodel.build()
         info("# finished!")
         debug("#  Summary Model:")
         debug("#   min_tags: %d" % (peakmodel.min_tags))
         debug("#   d: %d" % (peakmodel.d))
         info("# predicted fragment length is %d bps" % peakmodel.d)
-        info("# alternative fragment length(s) may be %s bps" % ','.join(map(str, peakmodel.alternative_d)))
+        info(
+            "# alternative fragment length(s) may be %s bps"
+            % ",".join(map(str, peakmodel.alternative_d))
+        )
         info("# Generate R script for model : %s" % (options.modelR))
         model2r_script(peakmodel, options.modelR, options.rfile)
         options.d = peakmodel.d
@@ -80,12 +79,10 @@ def run(o_options):
 
 
 def load_tag_files_options(options):
-    """From the options, load alignment tags.
-
-    """
+    """From the options, load alignment tags."""
     options.info("# read treatment tags...")
     tp = options.parser(options.ifile[0], buffer_size=options.buffer_size)
-    if not options.tsize:           # override tsize if user specified --tsize
+    if not options.tsize:  # override tsize if user specified --tsize
         ttsize = tp.tsize()
         options.tsize = ttsize
     treat = tp.build_fwtrack()
@@ -103,9 +100,7 @@ def load_tag_files_options(options):
 
 
 def load_frag_files_options(options):
-    """From the options, load treatment fragments and control fragments (if available).
-
-    """
+    """From the options, load treatment fragments and control fragments (if available)."""
     options.info("# read treatment fragments...")
 
     tp = options.parser(options.ifile[0], buffer_size=options.buffer_size)

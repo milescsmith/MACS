@@ -41,8 +41,8 @@ class NotEnoughPairsException(Exception):
 
 @cython.cclass
 class PeakModel:
-    """Peak Model class.
-    """
+    """Peak Model class."""
+
     # this can be PETrackI or FWTrack
     treatment: object
     # genome size
@@ -107,17 +107,21 @@ class PeakModel:
         """
         paired_peakpos: dict
         num_paired_peakpos: cython.long
-        c: bytes                # chromosome
+        c: bytes  # chromosome
 
-        self.peaksize = 2*self.bw
+        self.peaksize = 2 * self.bw
         # mininum unique hits on single strand, decided by lmfold
-        self.min_tags = int(round(float(self.treatment.total) *
-                                  self.lmfold *
-                                  self.peaksize / self.gz / 2))
+        self.min_tags = int(
+            round(
+                float(self.treatment.total) * self.lmfold * self.peaksize / self.gz / 2
+            )
+        )
         # maximum unique hits on single strand, decided by umfold
-        self.max_tags = int(round(float(self.treatment.total) *
-                                  self.umfold *
-                                  self.peaksize / self.gz / 2))
+        self.max_tags = int(
+            round(
+                float(self.treatment.total) * self.umfold * self.peaksize / self.gz / 2
+            )
+        )
         self.debug(f"#2 min_tags: {self.min_tags}; max_tags:{self.max_tags}; ")
         self.info("#2 looking for paired plus/minus strand peaks...")
         # find paired + and - strand peaks
@@ -130,7 +134,9 @@ class PeakModel:
         self.info("#2 Total number of paired peaks: %d" % (num_paired_peakpos))
 
         if num_paired_peakpos < 100:
-            self.error(f"#2 MACS3 needs at least 100 paired peaks at + and - strand to build the model, but can only find {num_paired_peakpos}! Please make your MFOLD range broader and try again. If MACS3 still can't build the model, we suggest to use --nomodel and --extsize 147 or other fixed number instead.")
+            self.error(
+                f"#2 MACS3 needs at least 100 paired peaks at + and - strand to build the model, but can only find {num_paired_peakpos}! Please make your MFOLD range broader and try again. If MACS3 still can't build the model, we suggest to use --nomodel and --extsize 147 or other fixed number instead."
+            )
             self.error("#2 Process for pairing-model is terminated!")
             raise NotEnoughPairsException("No enough pairs to build model")
 
@@ -138,9 +144,7 @@ class PeakModel:
         self.__paired_peak_model(paired_peakpos)
 
     def __str__(self):
-        """For debug...
-
-        """
+        """For debug..."""
         return """
 Summary of Peak Model:
   Baseline: %d
@@ -177,24 +181,32 @@ Summary of Peak Model:
             self.debug("Number of unique tags on + strand: %d" % (plus_tags.shape[0]))
             self.debug("Number of peaks in + strand: %d" % (len(plus_peaksinfo)))
             if plus_peaksinfo:
-                self.debug(f"plus peaks: first - {plus_peaksinfo[0]} ... last - {plus_peaksinfo[-1]}")
+                self.debug(
+                    f"plus peaks: first - {plus_peaksinfo[0]} ... last - {plus_peaksinfo[-1]}"
+                )
             # look for - strand peaks
             minus_peaksinfo = self.__naive_find_peaks(minus_tags)
             self.debug("Number of unique tags on - strand: %d" % (minus_tags.shape[0]))
             self.debug("Number of peaks in - strand: %d" % (len(minus_peaksinfo)))
             if minus_peaksinfo:
-                self.debug(f"minus peaks: first - {minus_peaksinfo[0]} ... last - {minus_peaksinfo[-1]}")
+                self.debug(
+                    f"minus peaks: first - {minus_peaksinfo[0]} ... last - {minus_peaksinfo[-1]}"
+                )
             if not plus_peaksinfo or not minus_peaksinfo:
                 self.debug("Chrom %s is discarded!" % (chrom))
                 continue
             else:
-                paired_peaks_pos[chrom] = self.__find_pair_center(plus_peaksinfo, minus_peaksinfo)
-                self.debug("Number of paired peaks in this chromosome: %d" % (len(paired_peaks_pos[chrom])))
+                paired_peaks_pos[chrom] = self.__find_pair_center(
+                    plus_peaksinfo, minus_peaksinfo
+                )
+                self.debug(
+                    "Number of paired peaks in this chromosome: %d"
+                    % (len(paired_peaks_pos[chrom]))
+                )
         return paired_peaks_pos
 
     @cython.cfunc
-    def __naive_find_peaks(self,
-                           taglist: cnp.ndarray(cython.int, ndim=1)) -> list:
+    def __naive_find_peaks(self, taglist: cnp.ndarray(cython.int, ndim=1)) -> list:
         """Naively call peaks based on tags counting.
 
         Return peak positions and the tag number in peak region by a tuple list[(pos,num)].
@@ -211,10 +223,8 @@ Summary of Peak Model:
             return peak_info
 
         # build pileup by extending both side to half peak size
-        pileup_array = naive_quick_pileup(taglist, int(self.peaksize/2))
-        peak_info = naive_call_peaks(pileup_array,
-                                     self.min_tags,
-                                     self.max_tags)
+        pileup_array = naive_quick_pileup(taglist, int(self.peaksize / 2))
+        peak_info = naive_call_peaks(pileup_array, self.min_tags, self.max_tags)
 
         return peak_info
 
@@ -247,7 +257,7 @@ Summary of Peak Model:
         ycorr: cnp.ndarray
         i_l_max: cnp.ndarray
 
-        window_size = 1+2*self.peaksize+self.tag_expansion_size
+        window_size = 1 + 2 * self.peaksize + self.tag_expansion_size
         # for plus strand pileup
         self.plus_line = np.zeros(window_size, dtype="i4")
         # for minus strand pileup
@@ -267,14 +277,10 @@ Summary of Peak Model:
             paired_peakpos_chrom = paired_peakpos[chroms[i]]
             (tags_plus, tags_minus) = self.treatment.get_locations_by_chr(chroms[i])
             # every paired peak has plus line and minus line
-            self.__model_add_line(paired_peakpos_chrom,
-                                  tags_plus,
-                                  plus_start,
-                                  plus_end)
-            self.__model_add_line(paired_peakpos_chrom,
-                                  tags_minus,
-                                  minus_start,
-                                  minus_end)
+            self.__model_add_line(paired_peakpos_chrom, tags_plus, plus_start, plus_end)
+            self.__model_add_line(
+                paired_peakpos_chrom, tags_minus, minus_start, minus_end
+            )
 
         self.__count(plus_start, plus_end, self.plus_line)
         self.__count(minus_start, minus_end, self.minus_line)
@@ -285,19 +291,25 @@ Summary of Peak Model:
         minus_line = self.minus_line
 
         # normalize first
-        minus_data = (minus_line - minus_line.mean())/(minus_line.std()*len(minus_line))
-        plus_data = (plus_line - plus_line.mean())/(plus_line.std()*len(plus_line))
+        minus_data = (minus_line - minus_line.mean()) / (
+            minus_line.std() * len(minus_line)
+        )
+        plus_data = (plus_line - plus_line.mean()) / (plus_line.std() * len(plus_line))
 
         # cross-correlation
-        ycorr = np.correlate(minus_data, plus_data, mode="full")[window_size-self.peaksize:window_size+self.peaksize]
-        xcorr = np.linspace(len(ycorr)//2*-1, len(ycorr)//2, num=len(ycorr))
+        ycorr = np.correlate(minus_data, plus_data, mode="full")[
+            window_size - self.peaksize : window_size + self.peaksize
+        ]
+        xcorr = np.linspace(len(ycorr) // 2 * -1, len(ycorr) // 2, num=len(ycorr))
 
         # smooth correlation values to get rid of local maximums from small fluctuations.
         # window size is by default 11.
         ycorr = smooth(ycorr, window="flat")
 
         # all local maximums could be alternative ds.
-        i_l_max = np.r_[False, ycorr[1:] > ycorr[:-1]] & np.r_[ycorr[:-1] > ycorr[1:], False]
+        i_l_max = (
+            np.r_[False, ycorr[1:] > ycorr[:-1]] & np.r_[ycorr[:-1] > ycorr[1:], False]
+        )
         i_l_max = np.where(i_l_max)[0]
         i_l_max = i_l_max[xcorr[i_l_max] > self.d_min]
         i_l_max = i_l_max[np.argsort(ycorr[i_l_max])[::-1]]
@@ -310,18 +322,20 @@ Summary of Peak Model:
         self.ycorr = ycorr
         self.xcorr = xcorr
 
-        self.scan_window = max(self.d, self.tag_expansion_size)*2
+        self.scan_window = max(self.d, self.tag_expansion_size) * 2
 
         self.info("#2 Model building with cross-correlation: Done")
 
         return True
 
     @cython.cfunc
-    def __model_add_line(self,
-                         pos1: list,
-                         pos2: cnp.ndarray(cython.int, ndim=1),
-                         start: cnp.ndarray(cython.int, ndim=1),
-                         end: cnp.ndarray(cython.int, ndim=1)):
+    def __model_add_line(
+        self,
+        pos1: list,
+        pos2: cnp.ndarray(cython.int, ndim=1),
+        start: cnp.ndarray(cython.int, ndim=1),
+        end: cnp.ndarray(cython.int, ndim=1),
+    ):
         """Project each pos in pos2 which is included in
         [pos1-self.peaksize,pos1+self.peaksize] to the line.
 
@@ -343,8 +357,8 @@ Summary of Peak Model:
         s: cython.int
         e: cython.int
 
-        i1 = 0                  # index for pos1
-        i2 = 0                  # index for pos2 index for pos2 in
+        i1 = 0  # index for pos1
+        i2 = 0  # index for pos2 index for pos2 in
         # previous pos1 [pos1-self.peaksize,pos1+self.peaksize] region
         i2_prev = 0
         i1_max = len(pos1)
@@ -360,34 +374,38 @@ Summary of Peak Model:
             p1 = pos1[i1]
             p2 = pos2[i2]
 
-            if p1-psize_adjusted1 > p2:
+            if p1 - psize_adjusted1 > p2:
                 # move pos2
                 i2 += 1
-            elif p1+psize_adjusted1 < p2:
+            elif p1 + psize_adjusted1 < p2:
                 # move pos1
                 i1 += 1
-                i2 = i2_prev    # search minus peaks from previous index
+                i2 = i2_prev  # search minus peaks from previous index
                 flag_find_overlap = False
-            else:               # overlap!
+            else:  # overlap!
                 if not flag_find_overlap:
                     flag_find_overlap = True
                     # only the first index is recorded
                     i2_prev = i2
                 # project
-                s = max(int(p2-self.tag_expansion_size/2-p1+psize_adjusted1), 0)
+                s = max(int(p2 - self.tag_expansion_size / 2 - p1 + psize_adjusted1), 0)
                 start[s] += 1
-                e = min(int(p2+self.tag_expansion_size/2-p1+psize_adjusted1), max_index)
+                e = min(
+                    int(p2 + self.tag_expansion_size / 2 - p1 + psize_adjusted1),
+                    max_index,
+                )
                 end[e] -= 1
                 i2 += 1
         return
 
     @cython.cfunc
-    def __count(self,
-                start: cnp.ndarray(cython.int, ndim=1),
-                end: cnp.ndarray(cython.int, ndim=1),
-                line: cnp.ndarray(cython.int, ndim=1)):
-        """
-        """
+    def __count(
+        self,
+        start: cnp.ndarray(cython.int, ndim=1),
+        end: cnp.ndarray(cython.int, ndim=1),
+        line: cnp.ndarray(cython.int, ndim=1),
+    ):
+        """ """
         i: cython.int
         pileup: cython.long
 
@@ -398,9 +416,7 @@ Summary of Peak Model:
         return
 
     @cython.cfunc
-    def __find_pair_center(self,
-                           pluspeaks: list,
-                           minuspeaks: list):
+    def __find_pair_center(self, pluspeaks: list, minuspeaks: list):
         # index for plus peaks
         ip: cython.long = 0
         # index for minus peaks
@@ -425,35 +441,35 @@ Summary of Peak Model:
             # for (peakposition, tagnumber in peak)
             (pp, pn) = pluspeaks[ip]
             (mp, mn) = minuspeaks[im]
-            if pp-self.peaksize > mp:
+            if pp - self.peaksize > mp:
                 # move minus
                 im += 1
-            elif pp+self.peaksize < mp:
+            elif pp + self.peaksize < mp:
                 # move plus
                 ip += 1
-                im = im_prev    # search minus peaks from previous index
+                im = im_prev  # search minus peaks from previous index
                 flag_find_overlap = False
-            else:               # overlap!
+            else:  # overlap!
                 if not flag_find_overlap:
                     flag_find_overlap = True
                     # only the first index is recorded
                     im_prev = im
                 # number tags in plus and minus peak region are comparable...
-                if pn/mn < 2 and pn/mn > 0.5:
+                if pn / mn < 2 and pn / mn > 0.5:
                     if pp < mp:
-                        pair_centers.append((pp+mp)//2)
+                        pair_centers.append((pp + mp) // 2)
                 im += 1
         if pair_centers:
-            self.debug(f"Paired centers: first - {pair_centers[0]} ... second - {pair_centers[-1]} ")
+            self.debug(
+                f"Paired centers: first - {pair_centers[0]} ... second - {pair_centers[-1]} "
+            )
         return pair_centers
 
 
 # smooth function from SciPy cookbook:
 # http://www.scipy.org/Cookbook/SignalSmooth
 @cython.ccall
-def smooth(x,
-           window_len: cython.int = 11,
-           window: str = 'hanning'):
+def smooth(x, window_len: cython.int = 11, window: str = "hanning"):
     """smooth the data using a window with requested size.
 
     This method is based on the convolution of a scaled window with the signal.
@@ -499,15 +515,17 @@ def smooth(x,
     if window_len < 3:
         return x
 
-    if window not in ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']:
-        raise ValueError("Window is on of 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'")
+    if window not in ["flat", "hanning", "hamming", "bartlett", "blackman"]:
+        raise ValueError(
+            "Window is on of 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'"
+        )
 
-    s = np.r_[x[window_len-1:0:-1], x, x[-1:-window_len:-1]]
+    s = np.r_[x[window_len - 1 : 0 : -1], x, x[-1:-window_len:-1]]
 
-    if window == 'flat':        # moving average
-        w = np.ones(window_len, 'd')
+    if window == "flat":  # moving average
+        w = np.ones(window_len, "d")
     else:
-        w = eval('np.'+window+'(window_len)')
+        w = eval("np." + window + "(window_len)")
 
-    y = np.convolve(w/w.sum(), s, mode='valid')
-    return y[(window_len//2):-(window_len//2)]
+    y = np.convolve(w / w.sum(), s, mode="valid")
+    return y[(window_len // 2) : -(window_len // 2)]

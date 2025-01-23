@@ -14,10 +14,16 @@ the distribution).
 # ------------------------------------
 # from MACS3.Utilities.Constants import *
 import cython
-from cython.cimports.MACS3.Signal.cPosValCalculation import single_end_pileup as c_single_end_pileup
-from cython.cimports.MACS3.Signal.cPosValCalculation import write_pv_array_to_bedGraph as c_write_pv_array_to_bedGraph
+from cython.cimports.MACS3.Signal.cPosValCalculation import (
+    single_end_pileup as c_single_end_pileup,
+)
+from cython.cimports.MACS3.Signal.cPosValCalculation import (
+    write_pv_array_to_bedGraph as c_write_pv_array_to_bedGraph,
+)
 from cython.cimports.MACS3.Signal.cPosValCalculation import PosVal
-from cython.cimports.MACS3.Signal.cPosValCalculation import quick_pileup as c_quick_pileup
+from cython.cimports.MACS3.Signal.cPosValCalculation import (
+    quick_pileup as c_quick_pileup,
+)
 
 # ------------------------------------
 # Other modules
@@ -44,8 +50,7 @@ def mean(a: float, b: float) -> float:
 
 @cython.cfunc
 def clean_up_ndarray(x: cnp.ndarray):
-    """ Clean up numpy array in two steps
-    """
+    """Clean up numpy array in two steps"""
     i: cython.long
 
     i = x.shape[0] // 2
@@ -56,10 +61,11 @@ def clean_up_ndarray(x: cnp.ndarray):
 
 @cython.cfunc
 def fix_coordinates(poss: cnp.ndarray, rlength: cython.int) -> cnp.ndarray:
-    """Fix the coordinates.
-    """
+    """Fix the coordinates."""
     i: cython.long
-    ptr: cython.pointer(cython.int) = cython.cast(cython.pointer(cython.int), poss.data)  # pointer
+    ptr: cython.pointer(cython.int) = cython.cast(
+        cython.pointer(cython.int), poss.data
+    )  # pointer
 
     # fix those negative coordinates
     for i in range(poss.shape[0]):
@@ -69,12 +75,13 @@ def fix_coordinates(poss: cnp.ndarray, rlength: cython.int) -> cnp.ndarray:
             break
 
     # fix those over-boundary coordinates
-    for i in range(poss.shape[0]-1, -1, -1):
+    for i in range(poss.shape[0] - 1, -1, -1):
         if ptr[i] > rlength:
             ptr[i] = rlength
         else:
             break
     return poss
+
 
 # ------------------------------------
 # functions
@@ -88,14 +95,16 @@ def fix_coordinates(poss: cnp.ndarray, rlength: cython.int) -> cnp.ndarray:
 
 
 @cython.ccall
-def pileup_and_write_se(trackI,
-                        output_filename: bytes,
-                        d: cython.int,
-                        scale_factor: cython.float,
-                        baseline_value: float = 0.0,
-                        directional: bool = True,
-                        halfextension: bool = True):
-    """ Pileup a FWTrackI object and write the pileup result into a
+def pileup_and_write_se(
+    trackI,
+    output_filename: bytes,
+    d: cython.int,
+    scale_factor: cython.float,
+    baseline_value: float = 0.0,
+    directional: bool = True,
+    halfextension: bool = True,
+):
+    """Pileup a FWTrackI object and write the pileup result into a
     bedGraph file.
 
     This function calls pure C functions from cPosValCalculation.
@@ -123,18 +132,22 @@ def pileup_and_write_se(trackI,
     if directional:
         # only extend to 3' side
         if halfextension:
-            five_shift = d//-4  # five shift is used to move cursor towards 5' direction to find the start of fragment
-            three_shift = d*3//4  # three shift is used to move cursor towards 3' direction to find the end of fragment
+            five_shift = (
+                d // -4
+            )  # five shift is used to move cursor towards 5' direction to find the start of fragment
+            three_shift = (
+                d * 3 // 4
+            )  # three shift is used to move cursor towards 3' direction to find the end of fragment
         else:
             five_shift = 0
             three_shift = d
     else:
         # both sides
         if halfextension:
-            five_shift = d//4
+            five_shift = d // 4
             three_shift = five_shift
         else:
-            five_shift = d//2
+            five_shift = d // 2
             three_shift = d - five_shift
     # end of the block
 
@@ -152,7 +165,19 @@ def pileup_and_write_se(trackI,
         plus_tags_pos = cython.cast(cython.p_int, plus_tags.data)
         minus_tags_pos = cython.cast(cython.p_int, minus_tags.data)
 
-        _data = c_single_end_pileup(plus_tags_pos, plus_tags.shape[0], minus_tags_pos, minus_tags.shape[0], five_shift, three_shift, 0, rlength, scale_factor, baseline_value, cython.address(l_data))
+        _data = c_single_end_pileup(
+            plus_tags_pos,
+            plus_tags.shape[0],
+            minus_tags_pos,
+            minus_tags.shape[0],
+            five_shift,
+            three_shift,
+            0,
+            rlength,
+            scale_factor,
+            baseline_value,
+            cython.address(l_data),
+        )
 
         # write
         py_bytes = chrom
@@ -163,16 +188,19 @@ def pileup_and_write_se(trackI,
         free(_data)
     return
 
+
 # function to pileup BAMPE/BEDPE stored in PETrackI object and write to a BEDGraph file
 # this function uses c function
 
 
 @cython.ccall
-def pileup_and_write_pe(petrackI,
-                        output_filename: bytes,
-                        scale_factor: float = 1,
-                        baseline_value: float = 0.0):
-    """ Pileup a PETrackI object and write the pileup result into a
+def pileup_and_write_pe(
+    petrackI,
+    output_filename: bytes,
+    scale_factor: float = 1,
+    baseline_value: float = 0.0,
+):
+    """Pileup a PETrackI object and write the pileup result into a
     bedGraph file.
 
     This function calls pure C functions from cPosValCalculation.
@@ -201,16 +229,23 @@ def pileup_and_write_pe(petrackI,
     fh.write("")
     fh.close()
 
-    for i in range( n_chroms ):
+    for i in range(n_chroms):
         chrom = chroms[i]
         locs = petrackI.get_locations_by_chr(chrom)
 
-        locs0 = np.sort(locs['l'])
-        locs1 = np.sort(locs['r'])
+        locs0 = np.sort(locs["l"])
+        locs1 = np.sort(locs["r"])
         start_pos = cython.cast(cython.p_int, locs0.data)  # <int *> locs0.data
         end_pos = cython.cast(cython.p_int, locs1.data)  # <int *> locs1.data
 
-        _data = c_quick_pileup(start_pos, end_pos, locs0.shape[0], scale_factor, baseline_value, cython.address(l_data))
+        _data = c_quick_pileup(
+            start_pos,
+            end_pos,
+            locs0.shape[0],
+            scale_factor,
+            baseline_value,
+            cython.address(l_data),
+        )
 
         # write
         py_bytes = chrom
@@ -221,6 +256,7 @@ def pileup_and_write_pe(petrackI,
         free(_data)
     return
 
+
 # ------------------------------------
 # functions for other codes
 # ------------------------------------
@@ -229,13 +265,15 @@ def pileup_and_write_pe(petrackI,
 
 
 @cython.ccall
-def se_all_in_one_pileup(plus_tags: cnp.ndarray,
-                         minus_tags: cnp.ndarray,
-                         five_shift: cython.long,
-                         three_shift: cython.long,
-                         rlength: cython.int,
-                         scale_factor: cython.float,
-                         baseline_value: cython.float ) -> list:
+def se_all_in_one_pileup(
+    plus_tags: cnp.ndarray,
+    minus_tags: cnp.ndarray,
+    five_shift: cython.long,
+    three_shift: cython.long,
+    rlength: cython.int,
+    scale_factor: cython.float,
+    baseline_value: cython.float,
+) -> list:
     """Return pileup given 5' end of fragment at plus or minus strand
     separately, and given shift at both direction to recover a
     fragment. This function is for single end sequencing library
@@ -261,8 +299,8 @@ def se_all_in_one_pileup(plus_tags: cnp.ndarray,
     pre_p: cython.int
     pileup: cython.int = 0
 
-    i_s: cython.long = 0        # index of start_poss
-    i_e: cython.long = 0        # index of end_poss
+    i_s: cython.long = 0  # index of start_poss
+    i_e: cython.long = 0  # index of end_poss
     i: cython.long
     I: cython.long = 0
     lx: cython.long
@@ -278,8 +316,8 @@ def se_all_in_one_pileup(plus_tags: cnp.ndarray,
     ret_p_ptr: cython.pointer(cython.int)
     ret_v_ptr: cython.pointer(cython.float)
 
-    start_poss = np.concatenate((plus_tags-five_shift, minus_tags-three_shift))
-    end_poss = np.concatenate((plus_tags+three_shift, minus_tags+five_shift))
+    start_poss = np.concatenate((plus_tags - five_shift, minus_tags - three_shift))
+    end_poss = np.concatenate((plus_tags + three_shift, minus_tags + five_shift))
 
     # sort
     start_poss.sort()
@@ -291,8 +329,12 @@ def se_all_in_one_pileup(plus_tags: cnp.ndarray,
 
     lx = start_poss.shape[0]
 
-    start_poss_ptr = cython.cast(cython.pointer(cython.int), start_poss.data)  # <int32_t *> start_poss.data
-    end_poss_ptr = cython.cast(cython.pointer(cython.int), end_poss.data)  # <int32_t *> end_poss.data
+    start_poss_ptr = cython.cast(
+        cython.pointer(cython.int), start_poss.data
+    )  # <int32_t *> start_poss.data
+    end_poss_ptr = cython.cast(
+        cython.pointer(cython.int), end_poss.data
+    )  # <int32_t *> end_poss.data
 
     ret_p = np.zeros(2 * lx, dtype="i4")
     ret_v = np.zeros(2 * lx, dtype="f4")
@@ -300,7 +342,7 @@ def se_all_in_one_pileup(plus_tags: cnp.ndarray,
     ret_p_ptr = cython.cast(cython.pointer(cython.int), ret_p.data)
     ret_v_ptr = cython.cast(cython.pointer(cython.float), ret_v.data)
 
-    tmp = [ret_p, ret_v]        # for (endpos,value)
+    tmp = [ret_p, ret_v]  # for (endpos,value)
 
     if start_poss.shape[0] == 0:
         return tmp
@@ -374,14 +416,17 @@ def se_all_in_one_pileup(plus_tags: cnp.ndarray,
 
     return tmp
 
+
 # quick pileup implemented in cython
 
 
 @cython.ccall
-def quick_pileup(start_poss: cnp.ndarray,
-                 end_poss: cnp.ndarray,
-                 scale_factor: cython.float,
-                 baseline_value: cython.float) -> list:
+def quick_pileup(
+    start_poss: cnp.ndarray,
+    end_poss: cnp.ndarray,
+    scale_factor: cython.float,
+    baseline_value: cython.float,
+) -> list:
     """Return pileup given plus strand and minus strand positions of fragments.
 
     A super-fast and simple algorithm proposed by Jie Wang. It will
@@ -402,8 +447,8 @@ def quick_pileup(start_poss: cnp.ndarray,
     pre_p: cython.int
     pileup: cython.int = 0
 
-    i_s: cython.long = 0        # index of plus_tags
-    i_e: cython.long = 0        # index of minus_tags
+    i_s: cython.long = 0  # index of plus_tags
+    i_e: cython.long = 0  # index of minus_tags
     i: cython.long
     I: cython.long = 0
     ls: cython.long = start_poss.shape[0]
@@ -423,8 +468,12 @@ def quick_pileup(start_poss: cnp.ndarray,
     ret_p_ptr: cython.pointer(cython.int)
     ret_v_ptr: cython.pointer(cython.float)
 
-    start_poss_ptr = cython.cast(cython.pointer(cython.int), start_poss.data)  # <int32_t *> start_poss.data
-    end_poss_ptr = cython.cast(cython.pointer(cython.int), end_poss.data)  # <int32_t *> end_poss.data
+    start_poss_ptr = cython.cast(
+        cython.pointer(cython.int), start_poss.data
+    )  # <int32_t *> start_poss.data
+    end_poss_ptr = cython.cast(
+        cython.pointer(cython.int), end_poss.data
+    )  # <int32_t *> end_poss.data
 
     ret_p = np.zeros(l, dtype="i4")
     ret_v = np.zeros(l, dtype="f4")
@@ -432,7 +481,7 @@ def quick_pileup(start_poss: cnp.ndarray,
     ret_p_ptr = cython.cast(cython.pointer(cython.int), ret_p.data)
     ret_v_ptr = cython.cast(cython.pointer(cython.float), ret_v.data)
 
-    tmp = [ret_p, ret_v]        # for (endpos,value)
+    tmp = [ret_p, ret_v]  # for (endpos,value)
 
     if ls == 0:
         return tmp
@@ -501,6 +550,7 @@ def quick_pileup(start_poss: cnp.ndarray,
 
     return tmp
 
+
 # quick pileup implemented in cython
 
 
@@ -536,11 +586,15 @@ def naive_quick_pileup(sorted_poss: cnp.ndarray, extension: int) -> list:
     start_poss[start_poss < 0] = 0
     end_poss = sorted_poss + extension
 
-    start_poss_ptr = cython.cast(cython.pointer(cython.int), start_poss.data)  # <int32_t *> start_poss.data
-    end_poss_ptr = cython.cast(cython.pointer(cython.int), end_poss.data)  # <int32_t *> end_poss.data
+    start_poss_ptr = cython.cast(
+        cython.pointer(cython.int), start_poss.data
+    )  # <int32_t *> start_poss.data
+    end_poss_ptr = cython.cast(
+        cython.pointer(cython.int), end_poss.data
+    )  # <int32_t *> end_poss.data
 
-    ret_p = np.zeros(2*l, dtype="i4")
-    ret_v = np.zeros(2*l, dtype="f4")
+    ret_p = np.zeros(2 * l, dtype="i4")
+    ret_v = np.zeros(2 * l, dtype="f4")
 
     ret_p_ptr = cython.cast(cython.pointer(cython.int), ret_p.data)
     ret_v_ptr = cython.cast(cython.pointer(cython.float), ret_v.data)
@@ -609,6 +663,7 @@ def naive_quick_pileup(sorted_poss: cnp.ndarray, extension: int) -> list:
     ret_v.resize(I, refcheck=False)
 
     return [ret_p, ret_v]
+
 
 # general function to compare two pv arrays in cython.
 
@@ -716,36 +771,41 @@ def over_two_pv_array(pv_array1: list, pv_array2: list, func: str = "max") -> li
 
 
 @cython.ccall
-def naive_call_peaks(pv_array: list, min_v: cython.float,
-                     max_v: cython.float = 1e30, max_gap: cython.int = 50,
-                     min_length: cython.int = 200):
-
+def naive_call_peaks(
+    pv_array: list,
+    min_v: cython.float,
+    max_v: cython.float = 1e30,
+    max_gap: cython.int = 50,
+    min_length: cython.int = 200,
+):
     pre_p: cython.int
     p: cython.int
     i: cython.int
-    x: cython.long           # index used for searching the first peak
+    x: cython.long  # index used for searching the first peak
     v: cython.double
-    peak_content: list     # (pre_p, p, v) for each region in the peak
-    ret_peaks: list = []   # returned peak summit and height
+    peak_content: list  # (pre_p, p, v) for each region in the peak
+    ret_peaks: list = []  # returned peak summit and height
 
     peak_content = []
     (ps, vs) = pv_array
-    psn = iter(ps).__next__         # assign the next function to a viable to speed up
+    psn = iter(ps).__next__  # assign the next function to a viable to speed up
     vsn = iter(vs).__next__
     x = 0
-    pre_p = 0                   # remember previous position
+    pre_p = 0  # remember previous position
     while True:
         # find the first region above min_v
-        try:                    # try to read the first data range for this chrom
+        try:  # try to read the first data range for this chrom
             p = psn()
             v = vsn()
         except Exception:
             break
-        x += 1                  # index for the next point
+        x += 1  # index for the next point
         if v > min_v:
-            peak_content = [(pre_p , p, v),]
+            peak_content = [
+                (pre_p, p, v),
+            ]
             pre_p = p
-            break               # found the first range above min_v
+            break  # found the first range above min_v
         else:
             pre_p = p
 
@@ -753,7 +813,7 @@ def naive_call_peaks(pv_array: list, min_v: cython.float,
         # continue scan the rest regions
         p = psn()
         v = vsn()
-        if v <= min_v:          # not be detected as 'peak'
+        if v <= min_v:  # not be detected as 'peak'
             pre_p = p
             continue
         # for points above min_v
@@ -766,12 +826,14 @@ def naive_call_peaks(pv_array: list, min_v: cython.float,
             if peak_content[-1][1] - peak_content[0][0] >= min_length:
                 __close_peak(peak_content, ret_peaks, max_v, min_length)
             # reset and start a new peak
-            peak_content = [(pre_p, p, v),]
+            peak_content = [
+                (pre_p, p, v),
+            ]
         pre_p = p
 
     # save the last peak
     if peak_content:
-        if peak_content[-1][1] - peak_content[0][0] >= min_length:       
+        if peak_content[-1][1] - peak_content[0][0] >= min_length:
             __close_peak(peak_content, ret_peaks, max_v, min_length)
     return ret_peaks
 
@@ -789,13 +851,15 @@ def __close_peak(peak_content, peaks, max_v: cython.float, min_length: cython.in
     tend: cython.int
     tvalue: cython.float
 
-    for (tstart, tend, tvalue) in peak_content:
+    for tstart, tend, tvalue in peak_content:
         if not summit_value or summit_value < tvalue:
-            tsummit = [int((tend+tstart)/2),]
+            tsummit = [
+                int((tend + tstart) / 2),
+            ]
             summit_value = tvalue
         elif summit_value == tvalue:
-            tsummit.append(int((tend+tstart)/2))
-    summit = tsummit[int((len(tsummit)+1)/2)-1]
+            tsummit.append(int((tend + tstart) / 2))
+    summit = tsummit[int((len(tsummit) + 1) / 2) - 1]
     if summit_value < max_v:
         peaks.append((summit, summit_value))
     return

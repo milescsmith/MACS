@@ -15,6 +15,7 @@ with the distribution).
 @author:  Tao Liu
 @contact: vladimir.liu@gmail.com
 """
+
 # ------------------------------------
 # python modules
 # ------------------------------------
@@ -40,7 +41,7 @@ __version__ = "Parser $Revision$"
 __author__ = "Tao Liu <tliu4@buffalo.edu>"
 __doc__ = "All Parser classes"
 
-__DNACOMPLEMENT__ = b'\x00\x01\x02\x03\x04\x05\x06\x07\x08\t\n\x0b\x0c\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f !"#$%&\'()*+,-./0123456789:;<=>?@TBGDEFCHIJKLMNOPQRSAUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~\x7f\x80\x81\x82\x83\x84\x85\x86\x87\x88\x89\x8a\x8b\x8c\x8d\x8e\x8f\x90\x91\x92\x93\x94\x95\x96\x97\x98\x99\x9a\x9b\x9c\x9d\x9e\x9f\xa0\xa1\xa2\xa3\xa4\xa5\xa6\xa7\xa8\xa9\xaa\xab\xac\xad\xae\xaf\xb0\xb1\xb2\xb3\xb4\xb5\xb6\xb7\xb8\xb9\xba\xbb\xbc\xbd\xbe\xbf\xc0\xc1\xc2\xc3\xc4\xc5\xc6\xc7\xc8\xc9\xca\xcb\xcc\xcd\xce\xcf\xd0\xd1\xd2\xd3\xd4\xd5\xd6\xd7\xd8\xd9\xda\xdb\xdc\xdd\xde\xdf\xe0\xe1\xe2\xe3\xe4\xe5\xe6\xe7\xe8\xe9\xea\xeb\xec\xed\xee\xef\xf0\xf1\xf2\xf3\xf4\xf5\xf6\xf7\xf8\xf9\xfa\xfb\xfc\xfd\xfe\xff' # A trans table to convert A to T, C to G, G to C, and T to A.
+__DNACOMPLEMENT__ = b"\x00\x01\x02\x03\x04\x05\x06\x07\x08\t\n\x0b\x0c\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f !\"#$%&'()*+,-./0123456789:;<=>?@TBGDEFCHIJKLMNOPQRSAUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~\x7f\x80\x81\x82\x83\x84\x85\x86\x87\x88\x89\x8a\x8b\x8c\x8d\x8e\x8f\x90\x91\x92\x93\x94\x95\x96\x97\x98\x99\x9a\x9b\x9c\x9d\x9e\x9f\xa0\xa1\xa2\xa3\xa4\xa5\xa6\xa7\xa8\xa9\xaa\xab\xac\xad\xae\xaf\xb0\xb1\xb2\xb3\xb4\xb5\xb6\xb7\xb8\xb9\xba\xbb\xbc\xbd\xbe\xbf\xc0\xc1\xc2\xc3\xc4\xc5\xc6\xc7\xc8\xc9\xca\xcb\xcc\xcd\xce\xcf\xd0\xd1\xd2\xd3\xd4\xd5\xd6\xd7\xd8\xd9\xda\xdb\xdc\xdd\xde\xdf\xe0\xe1\xe2\xe3\xe4\xe5\xe6\xe7\xe8\xe9\xea\xeb\xec\xed\xee\xef\xf0\xf1\xf2\xf3\xf4\xf5\xf6\xf7\xf8\xf9\xfa\xfb\xfc\xfd\xfe\xff"  # A trans table to convert A to T, C to G, G to C, and T to A.
 
 __CIGARCODE__ = "MIDNSHP=X"
 
@@ -59,17 +60,18 @@ class RACollection:
     PeakIO.
 
     """
+
     chrom: bytes
-    peak: PeakIO             # A PeakIO object
-    RAlists: list           # contain ReadAlignment lists for treatment (0) and control (1)
-    left: cython.long               # left position of peak
-    right: cython.long              # right position of peak
-    length: cython.long             # length of peak
-    RAs_left: cython.long           # left position of all RAs in the collection
-    RAs_right: cython.long          # right position of all RAs in the collection
-    sorted: bool             # if sorted by lpos
-    peak_refseq: bytes       # reference sequence in peak region b/w left and right
-    peak_refseq_ext: bytes   # reference sequence in peak region with extension on both sides b/w RAs_left and RAs_right
+    peak: PeakIO  # A PeakIO object
+    RAlists: list  # contain ReadAlignment lists for treatment (0) and control (1)
+    left: cython.long  # left position of peak
+    right: cython.long  # right position of peak
+    length: cython.long  # length of peak
+    RAs_left: cython.long  # left position of all RAs in the collection
+    RAs_right: cython.long  # right position of all RAs in the collection
+    sorted: bool  # if sorted by lpos
+    peak_refseq: bytes  # reference sequence in peak region b/w left and right
+    peak_refseq_ext: bytes  # reference sequence in peak region with extension on both sides b/w RAs_left and RAs_right
 
     def __init__(self, chrom: bytes, peak: PeakIO, RAlist_T: list, RAlist_C: list = []):
         """Create RACollection by: object taking:
@@ -95,7 +97,7 @@ class RACollection:
         if RAlist_T:
             self.RAs_left = RAlist_T[0]["lpos"]  # initial assignment of RAs_left
             self.RAs_right = RAlist_T[-1]["rpos"]  # initial assignment of RAs_right
-            self.sort()                           # it will set self.sorted = True
+            self.sort()  # it will set self.sorted = True
         else:
             self.RAs_left = -1
             self.RAs_right = -1
@@ -140,23 +142,39 @@ class RACollection:
             raise KeyError("Unavailable key:", keyname)
 
     def __getstate__(self):
-        #return {"chrom":self.chrom, "peak":self.peak, "RAlists":self.RAlists,
+        # return {"chrom":self.chrom, "peak":self.peak, "RAlists":self.RAlists,
         #        "left":self.left, "right":self.right, "length": self.length,
         #        "RAs_left":self.RAs_left, "RAs_right":self.RAs_right}
-        return (self.chrom, self.peak, self.RAlists, self.left, self.right,
-                self.length, self.RAs_left, self.RAs_right, self.peak_refseq,
-                self.peak_refseq_ext)
+        return (
+            self.chrom,
+            self.peak,
+            self.RAlists,
+            self.left,
+            self.right,
+            self.length,
+            self.RAs_left,
+            self.RAs_right,
+            self.peak_refseq,
+            self.peak_refseq_ext,
+        )
 
     def __setstate__(self, state):
-        (self.chrom, self.peak, self.RAlists, self.left, self.right,
-         self.length, self.RAs_left, self.RAs_right, self.peak_refseq,
-         self.peak_refseq_ext) = state
+        (
+            self.chrom,
+            self.peak,
+            self.RAlists,
+            self.left,
+            self.right,
+            self.length,
+            self.RAs_left,
+            self.RAs_right,
+            self.peak_refseq,
+            self.peak_refseq_ext,
+        ) = state
 
     @cython.ccall
     def sort(self):
-        """Sort RAs according to lpos. Should be used after realignment.
-
-        """
+        """Sort RAs according to lpos. Should be used after realignment."""
         if self.RAlists[0]:
             self.RAlists[0].sort(key=itemgetter("lpos"))
         if self.RAlists[1]:
@@ -166,7 +184,7 @@ class RACollection:
 
     @cython.ccall
     def remove_outliers(self, percent: cython.int = 5):
-        """ Remove outliers with too many n_edits. The outliers with
+        """Remove outliers with too many n_edits. The outliers with
         n_edits in top p% will be removed.
 
         Default: remove top 5% of reads that have too many differences
@@ -174,7 +192,7 @@ class RACollection:
         """
         n_edits_list: list
         ralist: list
-        read: ReadAlignment         # ReadAlignment object
+        read: ReadAlignment  # ReadAlignment object
         highest_n_edits: cython.int
         new_RAlist: list
         i: cython.int
@@ -184,9 +202,9 @@ class RACollection:
             for read in ralist:
                 n_edits_list.append(read["n_edits"])
         n_edits_list.sort()
-        highest_n_edits = n_edits_list[int(len(n_edits_list) * (1 - percent * .01))]
+        highest_n_edits = n_edits_list[int(len(n_edits_list) * (1 - percent * 0.01))]
 
-        for i in (range(len(self.RAlists))):
+        for i in range(len(self.RAlists)):
             new_RAlist = []
             for read in self.RAlists[i]:
                 if read["n_edits"] <= highest_n_edits:
@@ -197,8 +215,7 @@ class RACollection:
 
     @cython.ccall
     def n_edits_sum(self) -> cython.int:
-        """
-        """
+        """ """
         n_edits_list: list
         ralist: list
         read: ReadAlignment
@@ -219,9 +236,7 @@ class RACollection:
 
     @cython.cfunc
     def __get_peak_REFSEQ(self) -> tuple:
-        """Get the reference sequence within the peak region.
-
-        """
+        """Get the reference sequence within the peak region."""
         peak_refseq: bytearray
         # i: cython.int
         # prev_r: cython.long                   #remember the previous filled right end
@@ -236,29 +251,25 @@ class RACollection:
         start = min(self.RAs_left, self.left)
         end = max(self.RAs_right, self.right)
         # print ("left",start,"right",end)
-        peak_refseq_ext = bytearray(b'N' * (end - start))
+        peak_refseq_ext = bytearray(b"N" * (end - start))
 
         # for treatment.
-        peak_refseq_ext = self.__fill_refseq(peak_refseq_ext,
-                                             self.RAlists[0])
+        peak_refseq_ext = self.__fill_refseq(peak_refseq_ext, self.RAlists[0])
         # and control if available.
         if self.RAlists[1]:
-            peak_refseq_ext = self.__fill_refseq(peak_refseq_ext,
-                                                 self.RAlists[1])
+            peak_refseq_ext = self.__fill_refseq(peak_refseq_ext, self.RAlists[1])
 
         # trim
-        peak_refseq = peak_refseq_ext[self.left - start: self.right - start]
+        peak_refseq = peak_refseq_ext[self.left - start : self.right - start]
         return (bytes(peak_refseq), bytes(peak_refseq_ext))
 
     @cython.cfunc
-    def __fill_refseq(self,
-                      seq: bytearray,
-                      ralist: list) -> bytearray:
+    def __fill_refseq(self, seq: bytearray, ralist: list) -> bytearray:
         """Fill refseq sequence of whole peak with refseq sequences of
         each read in ralist.
 
         """
-        prev_r: cython.long         # previous right position of last
+        prev_r: cython.long  # previous right position of last
         # filled
         ind: cython.long
         ind_r: cython.long
@@ -279,21 +290,20 @@ class RACollection:
                 read_refseq = read.get_REFSEQ()
                 ind = read["lpos"] - start
                 ind_r = ind + read["rpos"] - read["lpos"]
-                seq[ind: ind_r] = read_refseq
+                seq[ind:ind_r] = read_refseq
                 prev_r = read["rpos"]
         # last
         read = ralist[-1]
         read_refseq = read.get_REFSEQ()
         ind = read["lpos"] - start
         ind_r = ind + read["rpos"] - read["lpos"]
-        seq[ind: ind_r] = read_refseq
+        seq[ind:ind_r] = read_refseq
         return seq
 
     @cython.ccall
-    def get_PosReadsInfo_ref_pos(self,
-                                 ref_pos: cython.long,
-                                 ref_nt: bytes,
-                                 Q: cython.int = 20):
+    def get_PosReadsInfo_ref_pos(
+        self, ref_pos: cython.long, ref_nt: bytes, Q: cython.int = 20
+    ):
         """Generate a PosReadsInfo for: object a given reference genome
         position.
 
@@ -331,9 +341,7 @@ class RACollection:
 
     @cython.ccall
     def get_FASTQ(self) -> bytearray:
-        """Get FASTQ file for all reads in RACollection.
-
-        """
+        """Get FASTQ file for all reads in RACollection."""
         ra: ReadAlignment
         fastq_text: bytearray
 
@@ -348,11 +356,10 @@ class RACollection:
         return fastq_text
 
     @cython.cfunc
-    def fermi_assemble(self,
-                       fermiMinOverlap: cython.int,
-                       opt_flag: cython.int = 0x80) -> list:
-        """A wrapper function to call Fermi unitig building functions.
-        """
+    def fermi_assemble(
+        self, fermiMinOverlap: cython.int, opt_flag: cython.int = 0x80
+    ) -> list:
+        """A wrapper function to call Fermi unitig building functions."""
         opt: cython.pointer(fml_opt_t)
         # c: cython.int
         n_seqs: cython.int
@@ -373,7 +380,7 @@ class RACollection:
         j: cython.int
         # tmpunitig: bytes
         # unitig: bytes                 # final unitig
-        unitig_list: list             # contain of: list sequences in format: bytes
+        unitig_list: list  # contain of: list sequences in format: bytes
         # n: cython.pointer(cython.int)
 
         n_seqs = len(self.RAlists[0]) + len(self.RAlists[1])
@@ -382,8 +389,9 @@ class RACollection:
 
         # prepare seq and qual, note, we only extract SEQ according to the +
         # strand of reference sequence.
-        seqs = cython.cast(cython.pointer(bseq1_t),
-                           malloc(n_seqs * cython.sizeof(bseq1_t)))  # we rely on fermi-lite to free this mem
+        seqs = cython.cast(
+            cython.pointer(bseq1_t), malloc(n_seqs * cython.sizeof(bseq1_t))
+        )  # we rely on fermi-lite to free this mem
 
         i = 0
         for ra in self.RAlists[0]:
@@ -391,16 +399,20 @@ class RACollection:
             tmpq = ra["QUAL"]
             l = len(tmps)
             # we rely on fermi-lite to free this mem
-            cseq = cython.cast(cython.pointer(cython.char),
-                               malloc((l+1)*cython.sizeof(cython.char)))
+            cseq = cython.cast(
+                cython.pointer(cython.char),
+                malloc((l + 1) * cython.sizeof(cython.char)),
+            )
             # we rely on fermi-lite to free this mem
-            cqual = cython.cast(cython.pointer(cython.char),
-                                malloc((l+1)*cython.sizeof(cython.char)))
+            cqual = cython.cast(
+                cython.pointer(cython.char),
+                malloc((l + 1) * cython.sizeof(cython.char)),
+            )
             for j in range(l):
                 cseq[j] = tmps[j]
                 cqual[j] = tmpq[j] + 33
-            cseq[l] = b'\x00'
-            cqual[l] = b'\x00'
+            cseq[l] = b"\x00"
+            cqual[l] = b"\x00"
 
             seqs[i].seq = cseq
             seqs[i].qual = cqual
@@ -417,16 +429,20 @@ class RACollection:
             tmpq = ra["QUAL"]
             l = len(tmps)
             # we rely on fermi-lite to free this mem
-            cseq = cython.cast(cython.pointer(cython.char),
-                               malloc((l+1)*cython.sizeof(cython.char)))
+            cseq = cython.cast(
+                cython.pointer(cython.char),
+                malloc((l + 1) * cython.sizeof(cython.char)),
+            )
             # we rely on fermi-lite to free this mem
-            cqual = cython.cast(cython.pointer(cython.char),
-                                malloc((l+1)*cython.sizeof(cython.char)))
+            cqual = cython.cast(
+                cython.pointer(cython.char),
+                malloc((l + 1) * cython.sizeof(cython.char)),
+            )
             for j in range(l):
                 cseq[j] = tmps[j]
                 cqual[j] = tmpq[j] + 33
-            cseq[l] = b'\x00'
-            cqual[l] = b'\x00'
+            cseq[l] = b"\x00"
+            cqual[l] = b"\x00"
 
             seqs[i].seq = cseq
             seqs[i].qual = cqual
@@ -445,7 +461,7 @@ class RACollection:
         #     unitig_k = int(self.RAlists[0][0]["l"]*fermiOverlapMinRatio)
 
         #     merge_min_len=int(self.RAlists[0][0]["l"]*0.5)
-        #fermiMinOverlap = int(self.RAlists[0][0]["l"]*fermiOverlapMinRatio)
+        # fermiMinOverlap = int(self.RAlists[0][0]["l"]*fermiOverlapMinRatio)
 
         # minimum overlap to merge, default 0
         # merge_min_len= max(25, int(self.RAlists[0][0]["l"]*0.5))
@@ -456,10 +472,8 @@ class RACollection:
         # n_utg = cython.cast(cython.pointer(cython.int),
         #                     PyMem_Malloc(cython.sizeof(int)))
 
-        opt = cython.cast(cython.pointer(fml_opt_t),
-                          malloc(cython.sizeof(fml_opt_t)))
-        n_utg = cython.cast(cython.pointer(cython.int),
-                            malloc(cython.sizeof(int)))
+        opt = cython.cast(cython.pointer(fml_opt_t), malloc(cython.sizeof(fml_opt_t)))
+        n_utg = cython.cast(cython.pointer(cython.int), malloc(cython.sizeof(int)))
 
         fml_opt_init(opt)
         # k-mer length for error correction (0 for auto; -1 to disable)
@@ -485,33 +499,33 @@ class RACollection:
         opt.mag_opt.flag = opt_flag
 
         # mag_opt.min_ovlp
-        #opt.mag_opt.min_ovlp = fermiMinOverlap
+        # opt.mag_opt.min_ovlp = fermiMinOverlap
 
         # drop an overlap if its length is below maxOvlpLen*FLOAT
-        #opt.mag_opt.min_dratio1 = 0.5
+        # opt.mag_opt.min_dratio1 = 0.5
 
         # retain a bubble if one side is longer than the other side by >INT-bp
-        #opt.mag_opt.max_bdiff = 10#merge_min_len
+        # opt.mag_opt.max_bdiff = 10#merge_min_len
 
         # trim_len:
         # trim_depth: Parameter used to trim the open end/tip. If trim_len == 0, do nothing
 
         # max_bdist:
         # max_bvtx: Parameter used to simply bubble while 0x80 flag is set.
-        #opt.mag_opt.max_bdist = 1024
-        #opt.mag_opt.max_bvtx = 128
+        # opt.mag_opt.max_bdist = 1024
+        # opt.mag_opt.max_bvtx = 128
 
         # max_bcov:
         # max_bfrac: Parameter used when aggressive bubble removal is not used. Bubble will be removed if its average coverage lower than max_bcov and fraction (cov1/(cov1+cov2)) is lower than max_bfrac
-        #opt.mag_opt.max_bcov = 10.
-        #opt.mag_opt.max_bfrac = 0.01
+        # opt.mag_opt.max_bcov = 10.
+        # opt.mag_opt.max_bfrac = 0.01
 
         utg = fml_assemble(opt, n_seqs, seqs, n_utg)
         # get results
         unitig_list = []
         for i in range(n_utg[0]):
             p = utg[i]
-            if (p.len < 0):
+            if p.len < 0:
                 continue
             # unitig = b''
             # for j in range(p.len):
@@ -556,11 +570,11 @@ class RACollection:
         aln_scores: list = []
         i: cython.int
 
-        reference = copy(self.peak_refseq_ext+b'\x00')
+        reference = copy(self.peak_refseq_ext + b"\x00")
 
         for i in range(len(unitig_list)):
             unitig = unitig_list[i]
-            target = copy(unitig + b'\x00')
+            target = copy(unitig + b"\x00")
             # we use swalign.c for local alignment (without affine gap
             # penalty). Will revise later.
             problem.a = target
@@ -579,7 +593,7 @@ class RACollection:
             # end of local alignment
 
             # try reverse complement
-            target = copy(unitig[::-1] + b'\x00')
+            target = copy(unitig[::-1] + b"\x00")
             target = target.translate(__DNACOMPLEMENT__)
             problem.a = target
             problem.alen = len(unitig)
@@ -613,14 +627,22 @@ class RACollection:
         return (target_alns, reference_alns, aln_scores, markup_alns)
 
     @cython.cfunc
-    def verify_alns(self, unitig_list, unitig_alns, reference_alns, aln_scores, markup_alns, min_score_100: cython.float = 150):
+    def verify_alns(
+        self,
+        unitig_list,
+        unitig_alns,
+        reference_alns,
+        aln_scores,
+        markup_alns,
+        min_score_100: cython.float = 150,
+    ):
         """Remove aln/unitig if it contains too many edits in a small region
 
         default min score is 150, which means under 2/-3/-5/-2 scoring schema, there are 10 mismatches within 100bps region.
         """
         i: cython.int
 
-        for i in range(len(unitig_list)-1, -1, -1):
+        for i in range(len(unitig_list) - 1, -1, -1):
             # pri: cython.int, aln_scores[i]
             # prunitig_alns: cython.int[i]
             # prmarkup_alns: cython.int[i]
@@ -634,10 +656,13 @@ class RACollection:
         return
 
     @cython.cfunc
-    def filter_unitig_with_bad_aln(self, unitig_list: list,
-                                   target_alns: list,
-                                   reference_alns: list,
-                                   gratio: float = 0.25) -> tuple:
+    def filter_unitig_with_bad_aln(
+        self,
+        unitig_list: list,
+        target_alns: list,
+        reference_alns: list,
+        gratio: float = 0.25,
+    ) -> tuple:
         """Remove unitigs that has too much gaps (both on target and
         reference) during alignments.
 
@@ -662,7 +687,7 @@ class RACollection:
         unitig: bytes
 
         for i in range(len(unitig_list)):
-            RAlists_T.append([])         # for each unitig, there is another of: list RAs
+            RAlists_T.append([])  # for each unitig, there is another of: list RAs
             RAlists_C.append([])
 
         # assign RAs to unitigs
@@ -699,8 +724,7 @@ class RACollection:
 
     @cython.cfunc
     def add_to_unitig_list(self, unitig_list, unitigs_2nd) -> list:
-        """
-        """
+        """ """
         i: cython.int
         j: cython.int
         flag: cython.int
@@ -778,13 +802,13 @@ class RACollection:
         n_unitigs_1 = len(unitig_list)
         # print " # of Unitigs:", n_unitigs_1
         # print " Map reads to unitigs"
-        (unitig_alns, reference_alns, aln_scores, markup_alns) = self.align_unitig_to_REFSEQ(unitig_list)
+        (unitig_alns, reference_alns, aln_scores, markup_alns) = (
+            self.align_unitig_to_REFSEQ(unitig_list)
+        )
 
-        self.verify_alns(unitig_list,
-                         unitig_alns,
-                         reference_alns,
-                         aln_scores,
-                         markup_alns)
+        self.verify_alns(
+            unitig_list, unitig_alns, reference_alns, aln_scores, markup_alns
+        )
         if len(unitig_list) == 0:
             # if stop here, it raises a flag that the region may
             # contain too many mismapped reads, we return -1
@@ -792,7 +816,9 @@ class RACollection:
         # print (" # of Unitigs:", n_unitigs_1)
 
         # assign RAs to unitigs
-        [RAlists_T, RAlists_C, unmapped_RAlist_T, unmapped_RAlist_C] = self.remap_RAs_w_unitigs(unitig_list)
+        [RAlists_T, RAlists_C, unmapped_RAlist_T, unmapped_RAlist_C] = (
+            self.remap_RAs_w_unitigs(unitig_list)
+        )
         # prunmapped_ra_collection: cython.int.get_FASTQ().decode()
 
         # n_unmapped = len(unmapped_RAlist_T) + len(unmapped_RAlist_C)
@@ -804,25 +830,27 @@ class RACollection:
             # print (" # of RAs not mapped, will be assembled again:", n_unmapped)
             n_unitigs_0 = n_unitigs_1
             # another round of assembly
-            unmapped_ra_collection = RACollection(self.chrom,
-                                                  self.peak,
-                                                  unmapped_RAlist_T,
-                                                  unmapped_RAlist_C)
-            unitigs_2nd = unmapped_ra_collection.fermi_assemble(fermiMinOverlap,
-                                                                opt_flag=0x80)
+            unmapped_ra_collection = RACollection(
+                self.chrom, self.peak, unmapped_RAlist_T, unmapped_RAlist_C
+            )
+            unitigs_2nd = unmapped_ra_collection.fermi_assemble(
+                fermiMinOverlap, opt_flag=0x80
+            )
 
             if unitigs_2nd:
                 unitig_list = self.add_to_unitig_list(unitig_list, unitigs_2nd)
                 n_unitigs_1 = len(unitig_list)
                 # print " # of Unitigs:", n_unitigs_1
                 # print " Map reads to unitigs"
-                (unitig_alns, reference_alns, aln_scores, markup_alns) = self.align_unitig_to_REFSEQ(unitig_list)
-                self.verify_alns(unitig_list,
-                                 unitig_alns,
-                                 reference_alns,
-                                 aln_scores,
-                                 markup_alns)
-                [RAlists_T, RAlists_C, unmapped_RAlist_T, unmapped_RAlist_C] = self.remap_RAs_w_unitigs(unitig_list)
+                (unitig_alns, reference_alns, aln_scores, markup_alns) = (
+                    self.align_unitig_to_REFSEQ(unitig_list)
+                )
+                self.verify_alns(
+                    unitig_list, unitig_alns, reference_alns, aln_scores, markup_alns
+                )
+                [RAlists_T, RAlists_C, unmapped_RAlist_T, unmapped_RAlist_C] = (
+                    self.remap_RAs_w_unitigs(unitig_list)
+                )
                 # n_unmapped = len(unmapped_RAlist_T) + len(unmapped_RAlist_C)
             # else:
             #    for r in unmapped_RAlist_T:
@@ -830,25 +858,27 @@ class RACollection:
 
             # print (" # of RAs not mapped, will be assembled again with 1/2 of fermiMinOverlap:", n_unmapped)
             # another round of assembly
-            unmapped_ra_collection = RACollection(self.chrom,
-                                                  self.peak,
-                                                  unmapped_RAlist_T,
-                                                  unmapped_RAlist_C)
-            unitigs_2nd = unmapped_ra_collection.fermi_assemble(fermiMinOverlap/2,
-                                                                opt_flag=0x80)
+            unmapped_ra_collection = RACollection(
+                self.chrom, self.peak, unmapped_RAlist_T, unmapped_RAlist_C
+            )
+            unitigs_2nd = unmapped_ra_collection.fermi_assemble(
+                fermiMinOverlap / 2, opt_flag=0x80
+            )
 
             if unitigs_2nd:
                 unitig_list = self.add_to_unitig_list(unitig_list, unitigs_2nd)
                 n_unitigs_1 = len(unitig_list)
                 # print " # of Unitigs:", n_unitigs_1
                 # print " Map reads to unitigs"
-                (unitig_alns, reference_alns, aln_scores, markup_alns) = self.align_unitig_to_REFSEQ(unitig_list)
-                self.verify_alns(unitig_list,
-                                 unitig_alns,
-                                 reference_alns,
-                                 aln_scores,
-                                 markup_alns)
-                [RAlists_T, RAlists_C, unmapped_RAlist_T, unmapped_RAlist_C] = self.remap_RAs_w_unitigs(unitig_list)
+                (unitig_alns, reference_alns, aln_scores, markup_alns) = (
+                    self.align_unitig_to_REFSEQ(unitig_list)
+                )
+                self.verify_alns(
+                    unitig_list, unitig_alns, reference_alns, aln_scores, markup_alns
+                )
+                [RAlists_T, RAlists_C, unmapped_RAlist_T, unmapped_RAlist_C] = (
+                    self.remap_RAs_w_unitigs(unitig_list)
+                )
                 # n_unmapped = len(unmapped_RAlist_T) + len(unmapped_RAlist_C)
             # else:
             #    for r in unmapped_RAlist_T:
@@ -867,12 +897,12 @@ class RACollection:
 
         # create UnitigCollection
         for i in range(len(unitig_list)):
-            #b'---------------------------AAATAATTTTATGTCCTTCAGTACAAAAAGCAGTTTCAACTAAAACCCAGTAACAAGCTAGCAATTCCTTTTAAATGGTGCTACTTCAAGCTGCAGCCAGGTAGCTTTTTATTACAAAAAATCCCACAGGCAGCCACTAGGTGGCAGTAACAGGCTTTTGCCAGCGGCTCCAGTCAGCATGGCTTGACTGTGTGCTGCAGAAACTTCTTAAATCGTCTGTGTTTGGGACTCGTGGGGCCCCACAGGGCTTTACAAGGGCTTTTTAATTTCCAAAAACATAAAACAAAAAAA--------------'
-            #b'GATATAAATAGGATGTTATGAGTTTTCAAATAATTTTATGTCCTTCAGTACAAAAAGCAGTTTCAACTAAAACCCAGTAACAAGCTAGCAATTCCTTTTAAATGGTGCTACTTCAAGCTGCAGCCAGGTAGCTTTTTATTACAAAAA-TCCCACAGGCAGCCACTAGGTGGCAGTAACAGGCTTTTGCCAGCGGCTCCAGTCAGCATGGCTTGACTGTGTGCTGCAGAAACTTCTTAAATCGTCTGTGTTTGGGACTCGTGGGGCCCCACAGGGCTTTACAAGGGCTTTTTAATTTCCAAAAACATAAAACAAAAAAAAATACAAATGTATT'
+            # b'---------------------------AAATAATTTTATGTCCTTCAGTACAAAAAGCAGTTTCAACTAAAACCCAGTAACAAGCTAGCAATTCCTTTTAAATGGTGCTACTTCAAGCTGCAGCCAGGTAGCTTTTTATTACAAAAAATCCCACAGGCAGCCACTAGGTGGCAGTAACAGGCTTTTGCCAGCGGCTCCAGTCAGCATGGCTTGACTGTGTGCTGCAGAAACTTCTTAAATCGTCTGTGTTTGGGACTCGTGGGGCCCCACAGGGCTTTACAAGGGCTTTTTAATTTCCAAAAACATAAAACAAAAAAA--------------'
+            # b'GATATAAATAGGATGTTATGAGTTTTCAAATAATTTTATGTCCTTCAGTACAAAAAGCAGTTTCAACTAAAACCCAGTAACAAGCTAGCAATTCCTTTTAAATGGTGCTACTTCAAGCTGCAGCCAGGTAGCTTTTTATTACAAAAA-TCCCACAGGCAGCCACTAGGTGGCAGTAACAGGCTTTTGCCAGCGGCTCCAGTCAGCATGGCTTGACTGTGTGCTGCAGAAACTTCTTAAATCGTCTGTGTTTGGGACTCGTGGGGCCCCACAGGGCTTTACAAGGGCTTTTTAATTTCCAAAAACATAAAACAAAAAAAAATACAAATGTATT'
             tmp_unitig_aln = unitig_alns[i]
             tmp_reference_aln = reference_alns[i]
             # tmp_unitig_seq = tmp_unitig_aln.replace(b'-',b'')
-            tmp_reference_seq = tmp_reference_aln.replace(b'-', b'')
+            tmp_reference_seq = tmp_reference_aln.replace(b"-", b"")
 
             # prtmp_unitig_aln: cython.int
             # prtmp_reference_aln: cython.int
@@ -880,27 +910,46 @@ class RACollection:
             # prtmp_reference_aln: cython.int
 
             # find the position on self.peak_refseq_ext
-            left_padding_ref = self.peak_refseq_ext.find(tmp_reference_seq)  # this number of nts should be skipped on refseq_ext from left
-            right_padding_ref = len(self.peak_refseq_ext) - left_padding_ref - len(tmp_reference_seq)  # this number of nts should be skipped on refseq_ext from right
+            left_padding_ref = self.peak_refseq_ext.find(
+                tmp_reference_seq
+            )  # this number of nts should be skipped on refseq_ext from left
+            right_padding_ref = (
+                len(self.peak_refseq_ext) - left_padding_ref - len(tmp_reference_seq)
+            )  # this number of nts should be skipped on refseq_ext from right
 
             # now, decide the lpos and rpos on reference of this unitig
             # first, trim left padding '-'
-            left_padding_unitig = len(tmp_unitig_aln) - len(tmp_unitig_aln.lstrip(b'-'))
-            right_padding_unitig = len(tmp_unitig_aln) - len(tmp_unitig_aln.rstrip(b'-'))
+            left_padding_unitig = len(tmp_unitig_aln) - len(tmp_unitig_aln.lstrip(b"-"))
+            right_padding_unitig = len(tmp_unitig_aln) - len(
+                tmp_unitig_aln.rstrip(b"-")
+            )
 
             tmp_lpos = start + left_padding_ref
             tmp_rpos = end - right_padding_ref
 
             for j in range(left_padding_unitig):
-                if tmp_reference_aln[j] != b'-':
+                if tmp_reference_aln[j] != b"-":
                     tmp_lpos += 1
             for j in range(1, right_padding_unitig + 1):
-                if tmp_reference_aln[-j] != b'-':
+                if tmp_reference_aln[-j] != b"-":
                     tmp_rpos -= 1
 
-            tmp_unitig_aln = tmp_unitig_aln[left_padding_unitig:(len(tmp_unitig_aln)-right_padding_unitig)]
-            tmp_reference_aln = tmp_reference_aln[left_padding_unitig:(len(tmp_reference_aln)-right_padding_unitig)]
+            tmp_unitig_aln = tmp_unitig_aln[
+                left_padding_unitig : (len(tmp_unitig_aln) - right_padding_unitig)
+            ]
+            tmp_reference_aln = tmp_reference_aln[
+                left_padding_unitig : (len(tmp_reference_aln) - right_padding_unitig)
+            ]
 
-            ura_list.append(UnitigRAs(self.chrom, tmp_lpos, tmp_rpos, tmp_unitig_aln, tmp_reference_aln, [RAlists_T[i], RAlists_C[i]]))
+            ura_list.append(
+                UnitigRAs(
+                    self.chrom,
+                    tmp_lpos,
+                    tmp_rpos,
+                    tmp_unitig_aln,
+                    tmp_reference_aln,
+                    [RAlists_T[i], RAlists_C[i]],
+                )
+            )
 
         return UnitigCollection(self.chrom, self.peak, ura_list)

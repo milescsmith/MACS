@@ -49,8 +49,7 @@ else:
 
 @cython.cfunc
 def get_bins_by_region(beg: cython.uint, end: cython.uint) -> list:
-    """ Get the possible bins by given a region
-    """
+    """Get the possible bins by given a region"""
     bins: list = [0]
     k: cython.uint
 
@@ -88,9 +87,9 @@ def reg2bins(rbeg, rend) -> list:
     BIN_ID_STARTS = (0, 1, 9, 73, 585, 4681)
 
     # Maximum range supported by specifications.
-    MAX_RNG = (2 ** 29) - 1
+    MAX_RNG = (2**29) - 1
 
-    assert 0 <= rbeg <= rend <= MAX_RNG, 'Invalid region {}, {}'.format(rbeg, rend)
+    assert 0 <= rbeg <= rend <= MAX_RNG, "Invalid region {}, {}".format(rbeg, rend)
 
     l_bins = []
 
@@ -103,6 +102,7 @@ def reg2bins(rbeg, rend) -> list:
             l_bins.append(start + bin_id_offset)
     return l_bins
 
+
 # ------------------------------------
 # Classes
 # ------------------------------------
@@ -114,12 +114,16 @@ class StrandFormatError(Exception):
     Example:
     raise StrandFormatError('Must be F or R','X')
     """
+
     def __init__(self, string, strand):
         self.strand = strand
         self.string = string
 
     def __str__(self):
-        return repr("Strand information can not be recognized in this line: \"%s\",\"%s\"" % (self.string, self.strand))
+        return repr(
+            'Strand information can not be recognized in this line: "%s","%s"'
+            % (self.string, self.strand)
+        )
 
 
 class MDTagMissingError(Exception):
@@ -130,12 +134,16 @@ class MDTagMissingError(Exception):
 
     aux is the auxiliary data part.
     """
+
     def __init__(self, name, aux):
         self.name = name
         self.aux = aux
 
     def __str__(self):
-        return repr("MD tag is missing! Please use \"samtools calmd\" command to add MD tags!\nName of sequence:%s\nCurrent auxiliary data section: %s" % (self.name.decode(), self.aux.decode()))
+        return repr(
+            'MD tag is missing! Please use "samtools calmd" command to add MD tags!\nName of sequence:%s\nCurrent auxiliary data section: %s'
+            % (self.name.decode(), self.aux.decode())
+        )
 
 
 @cython.cclass
@@ -148,15 +156,16 @@ class BAIFile:
     Please refer to https://samtools.github.io/hts-specs/SAMv1.pdf for
     detail definition of BAI file.
     """
-    filename: str               # filename
-    fhd: object                 # file handler
-    magic: bytes                # magic code for this file
-    n_ref: cython.uint             # number of refseqs/chromosomes
-    metadata: dict              # metadata for ref seqs
-    n_bins: cython.ulong            # total number of bins
-    n_chunks: cython.ulong          # total number of chunks
-    n_mapped: cython.ulong          # total mapped reads
-    n_unmapped: cython.ulong        # total unmapped reads
+
+    filename: str  # filename
+    fhd: object  # file handler
+    magic: bytes  # magic code for this file
+    n_ref: cython.uint  # number of refseqs/chromosomes
+    metadata: dict  # metadata for ref seqs
+    n_bins: cython.ulong  # total number of bins
+    n_chunks: cython.ulong  # total number of chunks
+    n_mapped: cython.ulong  # total mapped reads
+    n_unmapped: cython.ulong  # total unmapped reads
     bins: list
 
     def __init__(self, filename: str):
@@ -171,10 +180,12 @@ class BAIFile:
         3. self.fhd: buffered I/O stream of input file
         """
         self.filename = filename
-        self.fhd = io.open(filename, mode='rb')  # binary mode! I don't expect unicode here!
+        self.fhd = io.open(
+            filename, mode="rb"
+        )  # binary mode! I don't expect unicode here!
         self.magic = self.fhd.read(4)
         if self.magic != b"BAI\1":
-            raise Exception(f"Not a BAI file. The first 4 bytes are \'{self.magic}\'")
+            raise Exception(f"Not a BAI file. The first 4 bytes are '{self.magic}'")
         self.n_ref = self.__read_n_ref()
         self.bins = list(range(self.n_ref))
         self.metadata = dict.fromkeys(self.bins)
@@ -208,8 +219,8 @@ Example of metadata: ref 0, {self.metadata[0]}
     def __read_n_ref(self) -> cython.uint:
         ret_val: cython.uint
 
-        self.fhd.seek(4)      # skip magic
-        ret_val = unpack(endian_prefix+'I', self.fhd.read(4))[0]
+        self.fhd.seek(4)  # skip magic
+        ret_val = unpack(endian_prefix + "I", self.fhd.read(4))[0]
         return ret_val
 
     @cython.cfunc
@@ -230,7 +241,7 @@ Example of metadata: ref 0, {self.metadata[0]}
         # for each ref seq/chromosome
         for i in range(self.n_ref):
             # get number of bins
-            this_n_bin = unpack(endian_prefix+'I', self.fhd.read(4))[0]
+            this_n_bin = unpack(endian_prefix + "I", self.fhd.read(4))[0]
             # must be less than 37451
             assert this_n_bin <= 37451
             # increment the total n_bins counter
@@ -239,12 +250,14 @@ Example of metadata: ref 0, {self.metadata[0]}
             this_bin_dict = {}
             # for each bin
             for j in range(this_n_bin):
-                (this_bin, this_n_chunk) = unpack(endian_prefix+'II', self.fhd.read(8))
+                (this_bin, this_n_chunk) = unpack(
+                    endian_prefix + "II", self.fhd.read(8)
+                )
                 # increment the total n_chunks counter
                 self.n_chunks += this_n_chunk
                 this_chunks = []
                 for m in range(this_n_chunk):
-                    this_chunks.append(unpack(endian_prefix+'qq', self.fhd.read(16)))
+                    this_chunks.append(unpack(endian_prefix + "qq", self.fhd.read(16)))
                 # put the list of chunks in the this_bin_dict
                 this_bin_dict[this_bin] = this_chunks
             # put the this_bin_dict in the list
@@ -252,7 +265,7 @@ Example of metadata: ref 0, {self.metadata[0]}
             # we will skip the next linear index part -- since I don't
             # think we need them in regular
             # ChIP-seq/ATAC-seq/other-seq analysis. Let me know if I am wrong!
-            this_n_intv = unpack(endian_prefix+'I', self.fhd.read(4))[0]
+            this_n_intv = unpack(endian_prefix + "I", self.fhd.read(4))[0]
             # skip each 64bits
             self.fhd.seek(8 * this_n_intv, 1)
         # we will also skip n_no_coor, the Number of unplaced unmapped reads
@@ -261,8 +274,12 @@ Example of metadata: ref 0, {self.metadata[0]}
         for i in range(self.n_ref):
             if self.bins[i]:
                 pseudobin = self.bins[i].pop(37450)
-                self.metadata[i] = {"ref_beg": pseudobin[0][0], "ref_end": pseudobin[0][1],
-                                    "n_mapped": pseudobin[1][0], "n_unmapped": pseudobin[1][1]}
+                self.metadata[i] = {
+                    "ref_beg": pseudobin[0][0],
+                    "ref_end": pseudobin[0][1],
+                    "n_mapped": pseudobin[1][0],
+                    "n_unmapped": pseudobin[1][1],
+                }
                 self.n_mapped += pseudobin[1][0]
                 self.n_unmapped += pseudobin[1][1]
         return
@@ -300,7 +317,9 @@ Example of metadata: ref 0, {self.metadata[0]}
         return self.metadata[ref_n]
 
     @cython.ccall
-    def get_chunks_by_region(self, ref_n: cython.uint, beg: cython.uint, end: cython.uint) -> list:
+    def get_chunks_by_region(
+        self, ref_n: cython.uint, beg: cython.uint, end: cython.uint
+    ) -> list:
         """Get the chunks by given a region in a given refseq (not the name,
         but the index).
 
@@ -314,8 +333,7 @@ Example of metadata: ref 0, {self.metadata[0]}
 
     @cython.ccall
     def get_chunks_by_list_of_regions(self, ref_n: cython.uint, regions: list) -> list:
-        """ Similar to get_chunks_by_region, but accept a list of regions
-        """
+        """Similar to get_chunks_by_region, but accept a list of regions"""
         i: int
         temp_bins: list
         bins: list = []
@@ -330,7 +348,9 @@ Example of metadata: ref 0, {self.metadata[0]}
         return self.get_chunks_by_list_of_bins(ref_n, bins)
 
     @cython.ccall
-    def get_coffset_by_region(self, ref_n: cython.uint, beg: cython.uint, end: cython.uint) -> cython.ulong:
+    def get_coffset_by_region(
+        self, ref_n: cython.uint, beg: cython.uint, end: cython.uint
+    ) -> cython.ulong:
         """Find the offset to access the BGZF block which contains the
         leftmost reads overlapping with the given genomic region.
         """
@@ -352,7 +372,9 @@ Example of metadata: ref 0, {self.metadata[0]}
         return coffset
 
     @cython.ccall
-    def get_coffsets_by_list_of_regions(self, ref_n: cython.uint, regions: list) -> cython.ulong:
+    def get_coffsets_by_list_of_regions(
+        self, ref_n: cython.uint, regions: list
+    ) -> cython.ulong:
         """Find the offset to access the BGZF block which contains the
         leftmost reads overlapping with the given genomic region.
         """
@@ -387,16 +409,17 @@ class BAMaccessor:
     chunk then use zlib.decompress.
 
     """
+
     # all private
-    bam_filename: str           # BAM filename
-    bai_filename: str            # BAI filename
-    bamfile: object             # BAM file handler "rb" mode
-    baifile: BAIFile            # Matching BAI file
+    bam_filename: str  # BAM filename
+    bai_filename: str  # BAI filename
+    bamfile: object  # BAM file handler "rb" mode
+    baifile: BAIFile  # Matching BAI file
     # name of references/chromosomes, contain the order of chromosomes
     references: list
-    rlengths: dict    # lengths of references/chromosomes
-    bgzf_block_cache: bytes     # cache of decompressed bgzf_block
-    coffset_cache: cython.ulong     # coffset of the cached bgzf_block
+    rlengths: dict  # lengths of references/chromosomes
+    bgzf_block_cache: bytes  # cache of decompressed bgzf_block
+    coffset_cache: cython.ulong  # coffset of the cached bgzf_block
     # coffset of the next block of the cached bgzf_block
     noffset_cache: cython.ulong
 
@@ -419,10 +442,13 @@ class BAMaccessor:
             # The baifile is not for IO, it already contains all content.
             self.baifile = BAIFile(self.bai_filename)
         else:
-            raise Exception(f"BAI is not available! Please make sure the `{self.bai_filename}` file exists in the same path")
+            raise Exception(
+                f"BAI is not available! Please make sure the `{self.bai_filename}` file exists in the same path"
+            )
         # binary mode to read the raw BGZF file
-        self.bamfile = io.BufferedReader(io.open(self.bam_filename, mode='rb'),
-                                         buffer_size=READ_BUFFER_SIZE)
+        self.bamfile = io.BufferedReader(
+            io.open(self.bam_filename, mode="rb"), buffer_size=READ_BUFFER_SIZE
+        )
         self.bgzf_block_cache = b""
         self.coffset_cache = 0
         self.noffset_cache = 0
@@ -449,7 +475,7 @@ class BAMaccessor:
         of the alignment blocks, and set self.SOA.
 
         """
-        fhd: object          # file handler from gzip.open; temporary use
+        fhd: object  # file handler from gzip.open; temporary use
         header_len: cython.int
         x: cython.int
         nc: cython.int
@@ -461,25 +487,30 @@ class BAMaccessor:
         rlengths: dict = {}
 
         # we use traditional way to read the header -- through gzip
-        fhd = io.BufferedReader(gzip.open(self.bam_filename, mode='rb'),
-                                buffer_size=READ_BUFFER_SIZE)
+        fhd = io.BufferedReader(
+            gzip.open(self.bam_filename, mode="rb"), buffer_size=READ_BUFFER_SIZE
+        )
         # get the first 4 bytes
         magic = fhd.read(4)
         if magic != b"BAM\1":
-            raise Exception(f"File \"{self.filenmame}\" is not a BAM file. The magic string is not \"BAM\\1\", but \"{magic}\" ")
+            raise Exception(
+                f'File "{self.filenmame}" is not a BAM file. The magic string is not "BAM\\1", but "{magic}" '
+            )
         # next 4bytes is length of header
-        header_len = unpack(endian_prefix+'i', fhd.read(4))[0]
-        header_text = unpack(endian_prefix+'%ds' % header_len, fhd.read(header_len))[0]
+        header_len = unpack(endian_prefix + "i", fhd.read(4))[0]
+        header_text = unpack(endian_prefix + "%ds" % header_len, fhd.read(header_len))[
+            0
+        ]
         # get the number of chromosome
-        nc = unpack(endian_prefix+'i', fhd.read(4))[0]
+        nc = unpack(endian_prefix + "i", fhd.read(4))[0]
         for x in range(nc):
             # read each chromosome name
-            nlength = unpack(endian_prefix+'i', fhd.read(4))[0]
+            nlength = unpack(endian_prefix + "i", fhd.read(4))[0]
             refname = fhd.read(nlength)[:-1]
             references.append(refname)
             # don't jump over chromosome size
             # we can use it to avoid falling of chrom ends during peak calling
-            rlengths[refname] = unpack(endian_prefix+'i', fhd.read(4))[0]
+            rlengths[refname] = unpack(endian_prefix + "i", fhd.read(4))[0]
         self.references = references
         self.rlengths = rlengths
         # read sorting information
@@ -491,8 +522,7 @@ class BAMaccessor:
 
     @cython.cfunc
     def __check_sorted(self, header: bytes) -> bool:
-        """Check if the BAM is sorted by looking at the HEADER text
-        """
+        """Check if the BAM is sorted by looking at the HEADER text"""
         tl: bytes
         i: cython.int
 
@@ -503,28 +533,23 @@ class BAMaccessor:
             i = tl.find(b"SO:")
             if i != -1:
                 # I will only check the first 5 characters
-                if tl[i+3:i+8] == b"coord":
+                if tl[i + 3 : i + 8] == b"coord":
                     return True
         return False
 
     @cython.ccall
     def get_chromosomes(self) -> list:
-        """Get chromosomes in order of their appearance in BAM HEADER.
-
-        """
+        """Get chromosomes in order of their appearance in BAM HEADER."""
         return self.references
 
     @cython.ccall
     def get_rlengths(self) -> dict:
-        """Get chromosomes in order of their appearance in BAM HEADER.
-
-        """
+        """Get chromosomes in order of their appearance in BAM HEADER."""
         return self.rlengths
 
     @cython.ccall
     def __decode_voffset(self, voffset: cython.ulong) -> tuple:
-        """
-        """
+        """ """
         coffset: cython.ulong
         uoffset: cython.uint
 
@@ -534,15 +559,13 @@ class BAMaccessor:
 
     @cython.ccall
     def __seek(self, offset: cython.ulong) -> bool:
-        """Move to given position
-        """
+        """Move to given position"""
         self.bamfile.seek(offset, 0)
         return True
 
     @cython.ccall
     def __retrieve_cdata_from_bgzf_block(self) -> bool:
-        """Retrieve uncompressed CDATA from BGZF block
-        """
+        """Retrieve uncompressed CDATA from BGZF block"""
         xlen: cython.ushort
         bsize: cython.ushort
         extra: bytes
@@ -550,18 +573,23 @@ class BAMaccessor:
 
         self.bamfile.seek(10, 1)  # skip 10 bytes
         # get XLEN
-        xlen = unpack(endian_prefix+"H", self.bamfile.read(2))[0]
+        xlen = unpack(endian_prefix + "H", self.bamfile.read(2))[0]
         # get extra subfields
         extra = self.bamfile.read(xlen)
-        bsize = unpack(endian_prefix+'H', extra[extra.index(b'BC\x02\x00') + 4:])[0]
+        bsize = unpack(endian_prefix + "H", extra[extra.index(b"BC\x02\x00") + 4 :])[0]
         cdata = self.bamfile.read(bsize - xlen - 19)
         self.bgzf_block_cache = decompress(cdata, -MAX_WBITS)
         self.bamfile.seek(8, 1)  # move to the end of the block
         return True
 
     @cython.ccall
-    def get_reads_in_region(self, chrom: bytes, left: cython.int,
-                            right: cython.int, maxDuplicate: cython.int = 1) -> list:
+    def get_reads_in_region(
+        self,
+        chrom: bytes,
+        left: cython.int,
+        right: cython.int,
+        maxDuplicate: cython.int = 1,
+    ) -> list:
         """Get reads in a given region.
 
         Return: list of ReadAlignment
@@ -594,10 +622,12 @@ class BAMaccessor:
             # now parse the reads in dcdata
             i_bytes = 0
             while i_bytes < dcdata_length:
-                entrylength = unpack(endian_prefix+'I', dcdata[i_bytes: i_bytes + 4])[0]
+                entrylength = unpack(
+                    endian_prefix + "I", dcdata[i_bytes : i_bytes + 4]
+                )[0]
                 i_bytes += 4
                 # I am not sure if i_bytes+entrylength can be outside of dcdata_length...
-                read = self.__fw_binary_parse(dcdata[i_bytes: i_bytes + entrylength])
+                read = self.__fw_binary_parse(dcdata[i_bytes : i_bytes + entrylength])
                 i_bytes += entrylength
 
                 if read is None:
@@ -610,7 +640,13 @@ class BAMaccessor:
                 elif read["rpos"] > left:
                     # found overlap
                     # check if redundant
-                    if previous_read is not None and previous_read["lpos"] == read["lpos"] and previous_read["rpos"] == read["rpos"] and previous_read["strand"] == read["strand"] and previous_read["cigar"] == read["cigar"]:
+                    if (
+                        previous_read is not None
+                        and previous_read["lpos"] == read["lpos"]
+                        and previous_read["rpos"] == read["rpos"]
+                        and previous_read["strand"] == read["strand"]
+                        and previous_read["cigar"] == read["cigar"]
+                    ):
                         cur_duplicates += 1
                     else:
                         cur_duplicates = 1
@@ -630,7 +666,7 @@ class BAMaccessor:
 
     @cython.ccall
     def __fw_binary_parse(self, data, min_MAPQ=1):
-        """ Read information from an alignment block. Discard
+        """Read information from an alignment block. Discard
         alignment below a minimum MAPQ score, default: 1.
 
         Return: ReadAlignment object with only selected information,
@@ -664,7 +700,7 @@ class BAMaccessor:
             return None
 
         # read number of CIGAR operators, Bitwise FLAG
-        (n_cigar_op,  bwflag) = unpack(endian_prefix+'HH', data[12:16])
+        (n_cigar_op, bwflag) = unpack(endian_prefix + "HH", data[12:16])
 
         # first, we will discard problematic reads
         if bwflag & 4 or bwflag & 512 or bwflag & 256 or bwflag & 2048:
@@ -675,12 +711,12 @@ class BAMaccessor:
             # paired read. We should only keep sequence if the mate is mapped
             # Different with other MACS subcommands, both reads will be kept.
             if not bwflag & 2:
-                return None   # not a proper pair
+                return None  # not a proper pair
             if bwflag & 8:
-                return None   # the mate is unmapped
+                return None  # the mate is unmapped
 
         # read length of readname, MAPQ, and bin information
-        (l_read_name, MAPQ, bin_bam) = unpack(endian_prefix+'BBH', data[8:12])
+        (l_read_name, MAPQ, bin_bam) = unpack(endian_prefix + "BBH", data[8:12])
 
         # we will also discard reads having MAPQ lower than
         # min_MAPQ. MAPQ=255 means no alignment
@@ -690,25 +726,31 @@ class BAMaccessor:
         # Now we read other information
 
         # read ref name
-        ref = unpack(endian_prefix+'i', data[0:4])[0]
+        ref = unpack(endian_prefix + "i", data[0:4])[0]
         # read leftmost position of alignment
-        leftmost = unpack(endian_prefix+'i', data[4:8])[0]
+        leftmost = unpack(endian_prefix + "i", data[4:8])[0]
         # read length of query sequence
-        l_seq = unpack(endian_prefix+'i', data[16:20])[0]
+        l_seq = unpack(endian_prefix + "i", data[16:20])[0]
         # readname , skip next_refID, next_pos, tlen, which is 12
         # bytes or from the 32th byte
-        read_name = unpack(endian_prefix+'%ds' % (l_read_name),
-                           data[32: 32+l_read_name])[0][:-1]  # last byte is \x00
+        read_name = unpack(
+            endian_prefix + "%ds" % (l_read_name), data[32 : 32 + l_read_name]
+        )[0][:-1]  # last byte is \x00
         # cigar_op, find the index i first.
         i = 32 + l_read_name
-        cigar_op = unpack(endian_prefix+'%dI' % (n_cigar_op), data[i: i + n_cigar_op*4])
+        cigar_op = unpack(
+            endian_prefix + "%dI" % (n_cigar_op), data[i : i + n_cigar_op * 4]
+        )
         # read sequence information
-        i += n_cigar_op*4
-        seq = unpack(endian_prefix+'%ds' % int((l_seq+1)/2), data[i: i + int((l_seq+1)/2)])[0]
+        i += n_cigar_op * 4
+        seq = unpack(
+            endian_prefix + "%ds" % int((l_seq + 1) / 2),
+            data[i : i + int((l_seq + 1) / 2)],
+        )[0]
         # read quality information. Note: the value in BAM is the
         # acutal Phred score, there is no +33!
-        i += int((l_seq+1)/2)
-        qual = unpack(endian_prefix+'%ds' % (l_seq), data[i: i + l_seq])[0]
+        i += int((l_seq + 1) / 2)
+        qual = unpack(endian_prefix + "%ds" % (l_seq), data[i : i + l_seq])[0]
 
         rightmost = leftmost
         for j in cigar_op:
@@ -724,15 +766,23 @@ class BAMaccessor:
             strand = 0
 
         # MD tag
-        MD = b''
+        MD = b""
         i += l_seq
         tag = data[i:]
-        j = tag.find(b'MDZ')
+        j = tag.find(b"MDZ")
         if j == -1:
-            raise MDTagMissingError(data[32: 32+l_read_name], tag)
-        MD = tag[j+3: tag[j:].find(b"\0") + j]
+            raise MDTagMissingError(data[32 : 32 + l_read_name], tag)
+        MD = tag[j + 3 : tag[j:].find(b"\0") + j]
 
         # construct a ReadAlignment object and return
-        return ReadAlignment(read_name, self.references[ref],
-                             leftmost, rightmost, strand, seq, qual,
-                             cigar_op, MD)
+        return ReadAlignment(
+            read_name,
+            self.references[ref],
+            leftmost,
+            rightmost,
+            strand,
+            seq,
+            qual,
+            cigar_op,
+            MD,
+        )

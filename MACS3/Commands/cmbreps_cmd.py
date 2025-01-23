@@ -45,7 +45,14 @@ def run(options):
     cmbtrack = reps[0].overlie([reps[j] for j in range(1, i - 1)], func=options.method)
 
     # now output
-    ofile = BedGraphIO.bedGraphIO(os.path.join(options.outdir, options.ofile), data=cmbtrack)
+    ofile = BedGraphIO.bedGraphIO(
+        os.path.join(options.outdir, options.ofile), data=cmbtrack
+    )
     info("Write bedGraph of combined scores...")
-    ofile.write_bedGraph(name="%s_combined_scores" % (options.method.upper()), description="Scores calculated by %s" % (options.method.upper()))
-    info("Finished '%s'! Please check '%s'!" % (options.method, ofile.bedGraph_filename))
+    ofile.write_bedGraph(
+        name="%s_combined_scores" % (options.method.upper()),
+        description="Scores calculated by %s" % (options.method.upper()),
+    )
+    info(
+        "Finished '%s'! Please check '%s'!" % (options.method, ofile.bedGraph_filename)
+    )

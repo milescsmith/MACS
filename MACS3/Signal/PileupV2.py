@@ -42,6 +42,7 @@ This code is free software; you can redistribute it and/or modify it
 under the terms of the BSD License (see the file LICENSE included with
 the distribution).
 """
+
 # ------------------------------------
 import numpy as np
 import cython
@@ -64,8 +65,7 @@ def mapping_function_always_1(L: cython.int, R: cython.int) -> cython.float:
 
 @cython.cfunc
 def clean_up_ndarray(x: cnp.ndarray):
-    """ Clean up numpy array in two steps
-    """
+    """Clean up numpy array in two steps"""
     i: cython.long
     i = x.shape[0] // 2
     x.resize(100000 if i > 100000 else i, refcheck=False)
@@ -74,8 +74,9 @@ def clean_up_ndarray(x: cnp.ndarray):
 
 
 @cython.cfunc
-def make_PV_from_LR(LR_array: cnp.ndarray,
-                    mapping_func=mapping_function_always_1) -> cnp.ndarray:
+def make_PV_from_LR(
+    LR_array: cnp.ndarray, mapping_func=mapping_function_always_1
+) -> cnp.ndarray:
     """Make sorted PV array from a LR array for certain chromosome in a
     PETrackI object. The V/weight will be assigned as
     `mapping_func( L, R )` or simply 1 if mapping_func is the default.
@@ -95,18 +96,19 @@ def make_PV_from_LR(LR_array: cnp.ndarray,
 
     l_LR = LR_array.shape[0]
     l_PV = 2 * l_LR
-    PV = np.zeros(shape=l_PV, dtype=[('p', 'u4'), ('v', 'f4')])
+    PV = np.zeros(shape=l_PV, dtype=[("p", "u4"), ("v", "f4")])
     for i in range(l_LR):
         (L, R) = LR_array[i]
-        PV[i*2] = (L, mapping_func(L, R))
-        PV[i*2 + 1] = (R, -1.0 * mapping_func(L, R))
-    PV.sort(order='p')
+        PV[i * 2] = (L, mapping_func(L, R))
+        PV[i * 2 + 1] = (R, -1.0 * mapping_func(L, R))
+    PV.sort(order="p")
     return PV
 
 
 @cython.cfunc
-def make_PV_from_LRC(LRC_array: cnp.ndarray,
-                     mapping_func=mapping_function_always_1) -> cnp.ndarray:
+def make_PV_from_LRC(
+    LRC_array: cnp.ndarray, mapping_func=mapping_function_always_1
+) -> cnp.ndarray:
     """Make sorted PV array from a LR array for certain chromosome in a
     PETrackII object. The V/weight will be assigned as
     `mapping_func( L, R )` or simply 1 if mapping_func is the default.
@@ -127,18 +129,19 @@ def make_PV_from_LRC(LRC_array: cnp.ndarray,
 
     l_LRC = LRC_array.shape[0]
     l_PV = 2 * l_LRC
-    PV = np.zeros(shape=l_PV, dtype=[('p', 'u4'), ('v', 'f4')])
+    PV = np.zeros(shape=l_PV, dtype=[("p", "u4"), ("v", "f4")])
     for i in range(l_LRC):
         (L, R, C) = LRC_array[i]
-        PV[i*2] = (L, C*mapping_func(L, R))
-        PV[i*2 + 1] = (R, -1.0 * C * mapping_func(L, R))
-    PV.sort(order='p')
+        PV[i * 2] = (L, C * mapping_func(L, R))
+        PV[i * 2 + 1] = (R, -1.0 * C * mapping_func(L, R))
+    PV.sort(order="p")
     return PV
 
 
 @cython.cfunc
-def make_PV_from_PN(P_array: cnp.ndarray, N_array: cnp.ndarray,
-                    extsize: cython.int) -> cnp.ndarray:
+def make_PV_from_PN(
+    P_array: cnp.ndarray, N_array: cnp.ndarray, extsize: cython.int
+) -> cnp.ndarray:
     """Make sorted PV array from two arrays for certain chromosome in
     a FWTrack object. P_array is for the 5' end positions in plus
     strand, and N_array is for minus strand. We don't support weight
@@ -160,18 +163,18 @@ def make_PV_from_PN(P_array: cnp.ndarray, N_array: cnp.ndarray,
     l_PN = P_array.shape[0]
     assert l_PN == N_array.shape[0]
     l_PV = 4 * l_PN
-    PV = np.zeros(shape=l_PV, dtype=[('p', 'u4'), ('v', 'f4')])
+    PV = np.zeros(shape=l_PV, dtype=[("p", "u4"), ("v", "f4")])
     for i in range(l_PN):
         L = P_array[i]
         R = L + extsize
-        PV[i*2] = (L, 1)
-        PV[i*2 + 1] = (R, -1)
+        PV[i * 2] = (L, 1)
+        PV[i * 2 + 1] = (R, -1)
     for i in range(l_PN):
         R = N_array[i]
         L = R - extsize
-        PV[(l_PN + i)*2] = (L, 1)
-        PV[(l_PN + i)*2 + 1] = (R, -1)
-    PV.sort(order='p')
+        PV[(l_PN + i) * 2] = (L, 1)
+        PV[(l_PN + i) * 2 + 1] = (R, -1)
+    PV.sort(order="p")
     return PV
 
 
@@ -197,22 +200,21 @@ def pileup_PV(PV_array: cnp.ndarray) -> cnp.ndarray:
     i: cython.ulong
     c: cython.ulong
     # this is in bedGraph style as in Pileup.pyx, p is the end of a
-    # region, and v is the pileup value. It's 
+    # region, and v is the pileup value. It's
     pileup_PV: cnp.ndarray
     z = 0
     pre_z = -10000
     s = 0
-    pileup_PV = np.zeros(shape=PV_array.shape[0], dtype=[('p', 'u4'),
-                                                         ('v', 'f4')])
+    pileup_PV = np.zeros(shape=PV_array.shape[0], dtype=[("p", "u4"), ("v", "f4")])
     c = 0
     for i in range(PV_array.shape[0]):
-        e = PV_array[i]['p']
-        v = PV_array[i]['v']
+        e = PV_array[i]["p"]
+        v = PV_array[i]["v"]
         # make sure only to record the final value for the same position
         if e != s:
             # merge the p-v pair with the previous pair if the same v is found
             if z == pre_z:
-                pileup_PV[c-1]['p'] = e
+                pileup_PV[c - 1]["p"] = e
             else:
                 pileup_PV[c] = (e, z)
                 c += 1
@@ -223,14 +225,14 @@ def pileup_PV(PV_array: cnp.ndarray) -> cnp.ndarray:
     # assert z == 0
     return pileup_PV
 
+
 # ------------------------------------
 # public python functions
 # ------------------------------------
 
 
 @cython.ccall
-def pileup_from_LR_hmmratac(LR_array: cnp.ndarray,
-                            mapping_dict: dict) -> cnp.ndarray:
+def pileup_from_LR_hmmratac(LR_array: cnp.ndarray, mapping_dict: dict) -> cnp.ndarray:
     # this function is specifically designed for piling up fragments
     # for `hmmratac`.
     #
@@ -247,20 +249,21 @@ def pileup_from_LR_hmmratac(LR_array: cnp.ndarray,
 
     l_LR = LR_array.shape[0]
     l_PV = 2 * l_LR
-    PV = np.zeros(shape=l_PV, dtype=[('p', 'u4'), ('v', 'f4')])
+    PV = np.zeros(shape=l_PV, dtype=[("p", "u4"), ("v", "f4")])
     for i in range(l_LR):
         (L, R) = LR_array[i]
-        PV[i*2] = (L, mapping_dict[R - L])
-        PV[i*2 + 1] = (R, -1 * mapping_dict[R - L])
-    PV.sort(order='p')
+        PV[i * 2] = (L, mapping_dict[R - L])
+        PV[i * 2 + 1] = (R, -1 * mapping_dict[R - L])
+    PV.sort(order="p")
     pileup = pileup_PV(PV)
     clean_up_ndarray(PV)
     return pileup
 
 
 @cython.ccall
-def pileup_from_LR(LR_array: cnp.ndarray,
-                   mapping_func=mapping_function_always_1) -> cnp.ndarray:
+def pileup_from_LR(
+    LR_array: cnp.ndarray, mapping_func=mapping_function_always_1
+) -> cnp.ndarray:
     """This function will pile up the ndarray containing left and
     right positions, which is typically from PETrackI object. It's
     useful when generating the pileup of a single chromosome is
@@ -282,8 +285,9 @@ def pileup_from_LR(LR_array: cnp.ndarray,
 
 
 @cython.ccall
-def pileup_from_LRC(LRC_array: cnp.ndarray,
-                    mapping_func=mapping_function_always_1) -> cnp.ndarray:
+def pileup_from_LRC(
+    LRC_array: cnp.ndarray, mapping_func=mapping_function_always_1
+) -> cnp.ndarray:
     """This function will pile up the ndarray containing left and
     right positions and the counts, which is typically from PETrackII
     object. It's useful when generating the pileup of a single
@@ -306,8 +310,9 @@ def pileup_from_LRC(LRC_array: cnp.ndarray,
 
 
 @cython.ccall
-def pileup_from_PN(P_array: cnp.ndarray, N_array: cnp.ndarray,
-                   extsize: cython.int) -> cnp.ndarray:
+def pileup_from_PN(
+    P_array: cnp.ndarray, N_array: cnp.ndarray, extsize: cython.int
+) -> cnp.ndarray:
     """This function will pile up the ndarray containing plus
     (positive) and minus (negative) positions of all reads, which is
     typically from FWTrackI object. It's useful when generating the

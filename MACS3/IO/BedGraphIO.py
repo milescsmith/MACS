@@ -56,13 +56,12 @@ class bedGraphIO:
 
     If any of the above two criteria is violated, parsering will fail.
     """
-    bedGraph_filename = cython.declare(str, visibility='public')
-    data = cython.declare(object, visibility='public')
+
+    bedGraph_filename = cython.declare(str, visibility="public")
+    data = cython.declare(object, visibility="public")
 
     def __init__(self, bedGraph_filename: str, data=None):
-        """f must be a filename or a file handler.
-
-        """
+        """f must be a filename or a file handler."""
         self.bedGraph_filename = bedGraph_filename
         if data:
             assert isinstance(data, bedGraphTrackI)
@@ -105,8 +104,9 @@ class bedGraphIO:
         return self.data
 
     @cython.ccall
-    def write_bedGraph(self, name: str = "", description: str = "",
-                       trackline: bool = True):
+    def write_bedGraph(
+        self, name: str = "", description: str = "", trackline: bool = True
+    ):
         """Write all data to self.bedGraph_filename in bedGraph Format.
 
         name/description: the name and description in track line.
@@ -123,9 +123,11 @@ class bedGraphIO:
 
         fhd = open(self.bedGraph_filename, "w")
         if trackline:
-            trackcontents = (name.replace("\"", "\\\""),
-                             description.replace("\"", "\\\""))
-            fhd.write("track type=bedGraph name=\"%s\" description=\"%s\" visibility=2 alwaysZero=on\n" % trackcontents)
+            trackcontents = (name.replace('"', '\\"'), description.replace('"', '\\"'))
+            fhd.write(
+                'track type=bedGraph name="%s" description="%s" visibility=2 alwaysZero=on\n'
+                % trackcontents
+            )
         chrs = self.data.get_chr_names()
         for chrom in sorted(chrs):
             (p, v) = self.data.get_data_by_chr(chrom)
@@ -136,8 +138,7 @@ class bedGraphIO:
             for i in range(len(p)):
                 pos = pnext()
                 value = vnext()
-                fhd.write("%s\t%d\t%d\t%.5f\n" %
-                          (chrom.decode(), pre, pos, value))
+                fhd.write("%s\t%d\t%d\t%.5f\n" % (chrom.decode(), pre, pos, value))
                 pre = pos
         fhd.close()
         return

@@ -8,6 +8,7 @@ This code is free software; you can redistribute it and/or modify it
 under the terms of the BSD License (see the file LICENSE included with
 the distribution).
 """
+
 # ------------------------------------
 # python modules
 # ------------------------------------
@@ -29,8 +30,9 @@ info = logger.info
 
 
 @cython.cfunc
-def online_update(x: cython.float, c: cython.long,
-                  m: cython.float, s: cython.float) -> cython.tuple:
+def online_update(
+    x: cython.float, c: cython.long, m: cython.float, s: cython.float
+) -> cython.tuple:
     delta: cython.float
 
     c += 1
@@ -47,8 +49,9 @@ def online_update(x: cython.float, c: cython.long,
 
 @cython.inline
 @cython.cfunc
-def get_weighted_density(x: cython.int, m: cython.float, v:
-                         cython.float, w: cython.float) -> cython.float:
+def get_weighted_density(
+    x: cython.int, m: cython.float, v: cython.float, w: cython.float
+) -> cython.float:
     """Description:
 
     parameters:
@@ -71,12 +74,17 @@ def return_greater(data: cnp.ndarray) -> cython.int:
 
     largest_index: cython.int
     largest_inds: cnp.ndarray
-    largest_inds = np.argwhere(data == np.amax(data))  # find the indices of the most likely category(s) (max values)
-    if len(largest_inds) > 1:    # if there are multiple "most-likely" categories, ignore data point
+    largest_inds = np.argwhere(
+        data == np.amax(data)
+    )  # find the indices of the most likely category(s) (max values)
+    if (
+        len(largest_inds) > 1
+    ):  # if there are multiple "most-likely" categories, ignore data point
         largest_index = -1
     else:
         largest_index = largest_inds[0][0]
     return largest_index
+
 
 # ------------------------------------
 # Classes
@@ -85,7 +93,7 @@ def return_greater(data: cnp.ndarray) -> cython.int:
 
 @cython.cclass
 class HMMR_EM:
-    """ Main HMMR EM class.
+    """Main HMMR EM class.
 
     This EM trainer will find the optimal mean and stddev of three of
     the four modes -- mono-nucleosomal, di-nucloeosomal, and
@@ -94,31 +102,37 @@ class HMMR_EM:
     rely on the user's input.
 
     """
+
     # fragment length mean for each of the three modes
-    fragMeans = cython.declare(cnp.ndarray, visibility='public')
+    fragMeans = cython.declare(cnp.ndarray, visibility="public")
     # fragment length standard deviation for each of the three modes
-    fragStddevs = cython.declare(cnp.ndarray, visibility='public')
+    fragStddevs = cython.declare(cnp.ndarray, visibility="public")
     fragVars: cnp.ndarray  # we need variances to calculate PDF of normal distribution
     min_fraglen: cython.int
     max_fraglen: cython.int
     epsilon: cython.float  # maximum difference to call the value is converged
     maxIter: cython.int  # maximum iteration
     jump: cython.float
-    seed: cython.int            # random seed for downsampling
-    converged: cython.bint      # wheter the EM is converged
+    seed: cython.int  # random seed for downsampling
+    converged: cython.bint  # wheter the EM is converged
     sample_percentage: cython.float
-    __petrack: PETrackI         # PETrackI object
-    __data: cnp.ndarray          # data for fragment lengths
+    __petrack: PETrackI  # PETrackI object
+    __data: cnp.ndarray  # data for fragment lengths
     __weights: cnp.ndarray
 
-    def __init__(self, petrack: PETrackI, init_means: cython.list,
-                 init_stddevs: cython.list,
-                 min_fraglen: cython.int = 100,
-                 max_fraglen: cython.int = 1000,
-                 sample_percentage: cython.float = 10,
-                 epsilon: cython.float = 0.05,
-                 maxIter: cython.int = 20,
-                 jump: cython.float = 1.5, seed: cython.int = 12345):
+    def __init__(
+        self,
+        petrack: PETrackI,
+        init_means: cython.list,
+        init_stddevs: cython.list,
+        min_fraglen: cython.int = 100,
+        max_fraglen: cython.int = 1000,
+        sample_percentage: cython.float = 10,
+        epsilon: cython.float = 0.05,
+        maxIter: cython.int = 20,
+        jump: cython.float = 1.5,
+        seed: cython.int = 12345,
+    ):
         """Initialize HMMR_EM object. The first three parameters are required.
 
         parameters:
@@ -150,26 +164,34 @@ class HMMR_EM:
         self.jump = jump
         self.seed = seed
         self.converged = False
-        self.fragMeans = np.array(init_means, dtype='f4')
-        self.fragStddevs = np.array(init_stddevs, dtype='f4')
-        self.fragVars = (np.array(init_stddevs, dtype='f4')) ** 2
+        self.fragMeans = np.array(init_means, dtype="f4")
+        self.fragStddevs = np.array(init_stddevs, dtype="f4")
+        self.fragVars = (np.array(init_stddevs, dtype="f4")) ** 2
         self.sample_percentage = sample_percentage
 
         # first, let's prepare the lengths data
         # sample down
-        self.__petrack = petrack.sample_percent_copy(self.sample_percentage/100.0, seed=self.seed)  # may need to provide seed option for init function
+        self.__petrack = petrack.sample_percent_copy(
+            self.sample_percentage / 100.0, seed=self.seed
+        )  # may need to provide seed option for init function
         self.__data = self.__petrack.fraglengths()
         # fhd = open("allfrag.txt","w")
         # for d in self.__data:
         #    fhd.write(f"{d}\n")
         # fhd.close()
         # then we only keep those with fragment lengths within certain range
-        self.__data = self.__data[np.logical_and(self.__data >= self.min_fraglen, self.__data <= self.max_fraglen)]
+        self.__data = self.__data[
+            np.logical_and(
+                self.__data >= self.min_fraglen, self.__data <= self.max_fraglen
+            )
+        ]
 
-        info(f"# Downsampled {self.__data.shape[0]} fragments will be used for EM training...")
+        info(
+            f"# Downsampled {self.__data.shape[0]} fragments will be used for EM training..."
+        )
         # next, we will calculate the weights -- ie the proportion of fragments in each length category
-        cutoff1 = (init_means[1] - init_means[0])/2 + init_means[0]
-        cutoff2 = (init_means[2] - init_means[1])/2 + init_means[1]
+        cutoff1 = (init_means[1] - init_means[0]) / 2 + init_means[0]
+        cutoff2 = (init_means[2] - init_means[1]) / 2 + init_means[1]
 
         sum3 = len(self.__data)
         sum2 = sum(self.__data < cutoff2)
@@ -179,8 +201,10 @@ class HMMR_EM:
         counter2 = sum2 - sum1
         counter1 = sum1
 
-        self.__weights = np.array([counter1/sum3, counter2/sum3, counter3/sum3])
-        debug(f"initial: means: {self.fragMeans}, stddevs: {self.fragStddevs}, weights: {self.__weights}")
+        self.__weights = np.array([counter1 / sum3, counter2 / sum3, counter3 / sum3])
+        debug(
+            f"initial: means: {self.fragMeans}, stddevs: {self.fragStddevs}, weights: {self.__weights}"
+        )
         self.__learn()
         return
 
@@ -194,23 +218,29 @@ class HMMR_EM:
         itr: cython.int = 0
         i: cython.int
         counter: cython.int
-        old_means: cnp.ndarray = np.zeros(3, dtype='f4')
-        old_stddevs: cnp.ndarray = np.zeros(3, dtype='f4')
-        old_weights: cnp.ndarray = np.zeros(3, dtype='f4')
+        old_means: cnp.ndarray = np.zeros(3, dtype="f4")
+        old_stddevs: cnp.ndarray = np.zeros(3, dtype="f4")
+        old_weights: cnp.ndarray = np.zeros(3, dtype="f4")
 
         self.converged = False
         while self.converged is False:
-            for i in range(3):       
+            for i in range(3):
                 old_means[i] = self.fragMeans[i]
                 old_stddevs[i] = self.fragStddevs[i]
                 old_weights[i] = self.__weights[i]
 
             self.__iterate()
             itr += 1
-            debug(f"after iteration {itr}: means: {self.fragMeans}, stddevs: {self.fragStddevs}, weights: {self.__weights}")
+            debug(
+                f"after iteration {itr}: means: {self.fragMeans}, stddevs: {self.fragStddevs}, weights: {self.__weights}"
+            )
             counter = 0
             for i in range(3):
-                if abs(old_means[i] - self.fragMeans[i]) < self.epsilon and abs(old_weights[i] - self.__weights[i]) < self.epsilon and abs(old_stddevs[i] - self.fragStddevs[i]) < self.epsilon:
+                if (
+                    abs(old_means[i] - self.fragMeans[i]) < self.epsilon
+                    and abs(old_weights[i] - self.__weights[i]) < self.epsilon
+                    and abs(old_stddevs[i] - self.fragStddevs[i]) < self.epsilon
+                ):
                     counter += 1
             if counter == 3:
                 self.converged = True
@@ -237,32 +267,39 @@ class HMMR_EM:
         j: cython.int
         index: cython.int
 
-        temp = np.zeros(3, dtype='f4')  # for each category, the likelihood
+        temp = np.zeros(3, dtype="f4")  # for each category, the likelihood
         total = 0  # total number of data points/fragments assigned to three categories
-        means = np.zeros(3, dtype='f4')  # for each category, the new mean
-        variances = np.zeros(3, dtype='f4')  # for each category, the new variances
-        s = np.zeros(3, dtype='f4')          # for each category, __s
-                                            # is for storing
-                                            # intermediate values
-                                            # for the online
-                                            # algorithm
-        c = np.zeros(3, dtype='i8')          # for each category, __c
-                                            # is for storing
-                                            # intermediate values for
-                                            # the online algorithm
+        means = np.zeros(3, dtype="f4")  # for each category, the new mean
+        variances = np.zeros(3, dtype="f4")  # for each category, the new variances
+        s = np.zeros(3, dtype="f4")  # for each category, __s
+        # is for storing
+        # intermediate values
+        # for the online
+        # algorithm
+        c = np.zeros(3, dtype="i8")  # for each category, __c
+        # is for storing
+        # intermediate values for
+        # the online algorithm
         for i in range(len(self.__data)):
             for j in range(3):
                 # for each category: mono, di, tri- (3 in total), we get the likelihoods
                 # debug( f"j:{j} {self.__data[i]}, {self.fragMeans[j]}, {self.fragVars[j]}, {self.__weights[j]}" )
-                temp[j] = get_weighted_density(self.__data[i], self.fragMeans[j], self.fragVars[j], self.__weights[j])
+                temp[j] = get_weighted_density(
+                    self.__data[i],
+                    self.fragMeans[j],
+                    self.fragVars[j],
+                    self.__weights[j],
+                )
             # now look for the most likely category, as `index`
             index = return_greater(temp)
 
             # then we will update __means and __stds
             if index != -1:  # If we can find a mostly likely category
                 # #---- update with online algorithm --
-                (c[index], means[index], s[index]) = online_update(self.__data[i], c[index], means[index], s[index])
-                variances[index] = s[index]/c[index]
+                (c[index], means[index], s[index]) = online_update(
+                    self.__data[i], c[index], means[index], s[index]
+                )
+                variances[index] = s[index] / c[index]
                 total += 1
             # debug( f"index: {index} mean: {means[index]}" )
 
@@ -275,11 +312,19 @@ class HMMR_EM:
                 if c[j] == 0:
                     # if there is no fragment size in this category, ignore
                     continue
-                self.fragMeans[j] = self.fragMeans[j] + self.jump*(means[j] - self.fragMeans[j])
-                self.fragVars[j] = self.fragVars[j] + self.jump*(variances[j] - self.fragVars[j])
+                self.fragMeans[j] = self.fragMeans[j] + self.jump * (
+                    means[j] - self.fragMeans[j]
+                )
+                self.fragVars[j] = self.fragVars[j] + self.jump * (
+                    variances[j] - self.fragVars[j]
+                )
                 self.fragStddevs[j] = sqrt(self.fragVars[j])
                 self.__weights[j] = c[j] / total
         except ValueError:
-            print(' ValueError:  Adjust --means and --stddev options and re-run command')
-        debug(f"After this iteration, {total} fragments have been assigned with either of the three modes")
+            print(
+                " ValueError:  Adjust --means and --stddev options and re-run command"
+            )
+        debug(
+            f"After this iteration, {total} fragments have been assigned with either of the three modes"
+        )
         return

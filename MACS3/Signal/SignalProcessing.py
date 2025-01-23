@@ -9,6 +9,7 @@ This code is free software; you can redistribute it and/or modify it
 under the terms of the BSD License (see the file LICENSE included with
 the distribution).
 """
+
 # ------------------------------------
 # Python modules
 # ------------------------------------
@@ -26,8 +27,9 @@ from cython.cimports.cpython import bool
 
 
 @cython.ccall
-def maxima(signal: cnp.ndarray(cython.float, ndim=1),
-           window_size: cython.int = 51) -> cnp.ndarray:
+def maxima(
+    signal: cnp.ndarray(cython.float, ndim=1), window_size: cython.int = 51
+) -> cnp.ndarray:
     """return the local maxima in a signal after applying a 2nd order
     Savitsky-Golay (polynomial) filter using window_size specified
     """
@@ -36,7 +38,7 @@ def maxima(signal: cnp.ndarray(cython.float, ndim=1),
     sign: cnp.ndarray(cython.double, ndim=1)
     diff: cnp.ndarray(cython.double, ndim=1)
 
-    window_size = window_size//2*2+1  # to make an odd number
+    window_size = window_size // 2 * 2 + 1  # to make an odd number
     smoothed = savitzky_golay_order2_deriv1(signal, window_size).round(16)
     sign = np.sign(smoothed)
     diff = np.diff(sign)
@@ -45,17 +47,18 @@ def maxima(signal: cnp.ndarray(cython.float, ndim=1),
 
 
 @cython.cfunc
-def internal_minima(signal: cnp.ndarray(cython.float, ndim=1),
-                    maxima: cnp.ndarray(cython.int, ndim=1)) -> cnp.ndarray:
+def internal_minima(
+    signal: cnp.ndarray(cython.float, ndim=1), maxima: cnp.ndarray(cython.int, ndim=1)
+) -> cnp.ndarray:
     ret: cnp.ndarray(cython.int, ndim=1)
     n: cython.int = maxima.shape[0]
     i: cython.int
 
     if n == 0 or n == 1:
-        ret = np.ndarray(0, 'i4')
+        ret = np.ndarray(0, "i4")
         return ret
     else:
-        ret = np.zeros(n - 1, 'i4')
+        ret = np.zeros(n - 1, "i4")
         pos1 = maxima[0]
         for i in range(n - 1):
             pos2 = maxima[i + 1]
@@ -71,8 +74,9 @@ def sqrt(threshold: cython.float) -> cython.float:
 
 
 @cython.ccall
-def enforce_peakyness(signal: cnp.ndarray(cython.float, ndim=1),
-                      maxima: cnp.ndarray(cython.int, ndim=1)):
+def enforce_peakyness(
+    signal: cnp.ndarray(cython.float, ndim=1), maxima: cnp.ndarray(cython.int, ndim=1)
+):
     """requires peaks described by a signal and a set of points where
     the signal is at a maximum to meet a certain set of criteria
 
@@ -106,7 +110,7 @@ def enforce_peakyness(signal: cnp.ndarray(cython.float, ndim=1),
 
     threshold = signal[minima[0]]
     threshold += sqrt(threshold)
-    new_signal = signal[0:minima[0]] - threshold - sqrt(threshold)
+    new_signal = signal[0 : minima[0]] - threshold - sqrt(threshold)
 
     if is_valid_peak(new_signal, maxima[0]):
         peaky_maxima[0] = maxima[0]
@@ -114,14 +118,14 @@ def enforce_peakyness(signal: cnp.ndarray(cython.float, ndim=1),
     for i in range(n - 1):
         threshold = max(signal[minima[i]], signal[minima[i + 1]])
         threshold += sqrt(threshold)
-        new_signal = signal[minima[i]:minima[i+1]] - threshold
-        new_maximum = maxima[i+1] - minima[i]
+        new_signal = signal[minima[i] : minima[i + 1]] - threshold
+        new_maximum = maxima[i + 1] - minima[i]
         if is_valid_peak(new_signal, new_maximum):
             peaky_maxima[j] = maxima[i + 1]
             j += 1
     threshold = signal[minima[-1]]
     threshold += sqrt(threshold)
-    new_signal = signal[minima[-1]:] - threshold
+    new_signal = signal[minima[-1] :] - threshold
     new_maximum = maxima[-1] - minima[-1]
     if is_valid_peak(new_signal, new_maximum):
         peaky_maxima[j] = maxima[-1]
@@ -132,8 +136,9 @@ def enforce_peakyness(signal: cnp.ndarray(cython.float, ndim=1),
 
 # hardcoded minimum peak width = 50
 @cython.cfunc
-def is_valid_peak(signal: cnp.ndarray(cython.float, ndim=1),
-                  maximum: cython.int) -> bool:
+def is_valid_peak(
+    signal: cnp.ndarray(cython.float, ndim=1), maximum: cython.int
+) -> bool:
     s: cnp.ndarray
     length: cython.int
 
@@ -149,15 +154,15 @@ def is_valid_peak(signal: cnp.ndarray(cython.float, ndim=1),
 # require at least 6 different float values -- prevents broad flat peaks
 @cython.cfunc
 def too_flat(signal: cnp.ndarray(cython.float, ndim=1)) -> bool:
-    """return whether signal has at least 6 unique values
-    """
+    """return whether signal has at least 6 unique values"""
     return np.unique(signal).shape[0] < 6
 
 
 # hard clip a region with negative values
 @cython.cfunc
-def hard_clip(signal: cnp.ndarray(cython.float, ndim=1),
-              maximum: cython.int) -> cnp.ndarray:
+def hard_clip(
+    signal: cnp.ndarray(cython.float, ndim=1), maximum: cython.int
+) -> cnp.ndarray:
     """clip the signal in both directions at the nearest values <= 0
     to position maximum
     """
@@ -178,9 +183,11 @@ def hard_clip(signal: cnp.ndarray(cython.float, ndim=1),
 
 
 @cython.ccall
-def enforce_valleys(signal: cnp.ndarray(cython.float, ndim=1),
-                    summits: cnp.ndarray(cython.int, ndim=1),
-                    min_valley: cython.float = 0.8) -> cnp.ndarray:
+def enforce_valleys(
+    signal: cnp.ndarray(cython.float, ndim=1),
+    summits: cnp.ndarray(cython.int, ndim=1),
+    min_valley: cython.float = 0.8,
+) -> cnp.ndarray:
     """require a value of <= min_valley * lower summit
     between each pair of summits
     """
@@ -202,7 +209,7 @@ def enforce_valleys(signal: cnp.ndarray(cython.float, ndim=1),
     if n_summits == 1:
         return summits
     for i in range(1, n_summits):
-        prev_summit_pos = valid_summits[n_valid_summits-1]
+        prev_summit_pos = valid_summits[n_valid_summits - 1]
         summit_pos = summits[i]
         prev_v = signal[prev_summit_pos]
         v = signal[summit_pos]
@@ -211,7 +218,7 @@ def enforce_valleys(signal: cnp.ndarray(cython.float, ndim=1),
             valid_summits[n_valid_summits] = summit_pos
             n_valid_summits += 1
         elif v > prev_v:
-            valid_summits[n_valid_summits-1] = summit_pos
+            valid_summits[n_valid_summits - 1] = summit_pos
     valid_summits.resize(n_valid_summits, refcheck=False)
     return valid_summits
 
@@ -221,8 +228,9 @@ def enforce_valleys(signal: cnp.ndarray(cython.float, ndim=1),
 # needs sane input paramters, window size > 4
 # switched to double precision for internal accuracy
 @cython.ccall
-def savitzky_golay_order2_deriv1(signal: cnp.ndarray(cython.float, ndim=1),
-                                 window_size: cython.int) -> cnp.ndarray:
+def savitzky_golay_order2_deriv1(
+    signal: cnp.ndarray(cython.float, ndim=1), window_size: cython.int
+) -> cnp.ndarray:
     """Smooth (and optionally differentiate) data with a Savitzky-Golay filter.
     The Savitzky-Golay filter removes high frequency noise from data.
     It has the advantage of preserving the original shape and
@@ -270,27 +278,28 @@ def savitzky_golay_order2_deriv1(signal: cnp.ndarray(cython.float, ndim=1),
         window_size += 1
     half_window = (window_size - 1) // 2
     # precompute coefficients
-    b = np.array([[1, k, k**2] for k in range(-half_window, half_window+1)],
-                 dtype='i8')
+    b = np.array(
+        [[1, k, k**2] for k in range(-half_window, half_window + 1)], dtype="i8"
+    )
     m = np.linalg.pinv(b)[1]
     # pad the signal at the extremes with
     # values taken from the signal itself
-    firstvals = signal[0] - np.abs(signal[1:half_window+1][::-1] - signal[0])
-    lastvals = signal[-1] + np.abs(signal[-half_window-1:-1][::-1] - signal[-1])
+    firstvals = signal[0] - np.abs(signal[1 : half_window + 1][::-1] - signal[0])
+    lastvals = signal[-1] + np.abs(signal[-half_window - 1 : -1][::-1] - signal[-1])
     signal = np.concatenate((firstvals, signal, lastvals))
-    ret = np.convolve(m[::-1],
-                      signal.astype("f8"),
-                      mode='valid')
+    ret = np.convolve(m[::-1], signal.astype("f8"), mode="valid")
     return ret
 
 
 # Another modified version from http://www.scipy.org/Cookbook/SavitzkyGolay
 @cython.ccall
-def savitzky_golay(y: cnp.ndarray(cython.float, ndim=1),
-                   window_size: cython.int,
-                   order: cython.int,
-                   deriv: cython.int = 0,
-                   rate: cython.int = 1) -> cnp.ndarray:
+def savitzky_golay(
+    y: cnp.ndarray(cython.float, ndim=1),
+    window_size: cython.int,
+    order: cython.int,
+    deriv: cython.int = 0,
+    rate: cython.int = 1,
+) -> cnp.ndarray:
     """Smooth (and optionally differentiate) data with a Savitzky-Golay filter.
     The Savitzky-Golay filter removes high frequency noise from data.
     It has the advantage of preserving the original shape and
@@ -358,14 +367,14 @@ def savitzky_golay(y: cnp.ndarray(cython.float, ndim=1),
         raise TypeError("window_size is too small for the polynomials order")
     half_window = (window_size - 1) // 2
     # precompute coefficients
-    b = np.array([[k**i
-                   for i in range(order + 1)]
-                  for k in range(-half_window, half_window+1)])
+    b = np.array(
+        [[k**i for i in range(order + 1)] for k in range(-half_window, half_window + 1)]
+    )
     m = np.linalg.pinv(b)[deriv] * rate**deriv * mathfactorial(deriv)
     # pad the signal at the extremes with
     # values taken from the signal itself
-    firstvals = y[0] - np.abs(y[1:half_window + 1][::-1] - y[0])
-    lastvals = y[-1] + np.abs(y[-half_window - 1:-1][::-1] - y[-1])
+    firstvals = y[0] - np.abs(y[1 : half_window + 1][::-1] - y[0])
+    lastvals = y[-1] + np.abs(y[-half_window - 1 : -1][::-1] - y[-1])
     y = np.concatenate((firstvals, y, lastvals))
-    ret = np.convolve(m[::-1], y, mode='valid').astype("float32")
+    ret = np.convolve(m[::-1], y, mode="valid").astype("float32")
     return ret
